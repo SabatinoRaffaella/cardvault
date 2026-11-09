@@ -9,9 +9,11 @@ class CollectionCardArtwork extends StatefulWidget {
       required this.cardId,
       required this.language,
       required this.fallbackUrl,
+      this.showCatalogBadge = true,
       required this.imageBuilder});
   final CollectionArtworkController controller;
   final String cardId, language, fallbackUrl;
+  final bool showCatalogBadge;
   final Widget Function(String url, VoidCallback? onError) imageBuilder;
   @override
   State<CollectionCardArtwork> createState() => _CollectionCardArtworkState();
@@ -81,7 +83,7 @@ class _CollectionCardArtworkState extends State<CollectionCardArtwork> {
                   });
                   WidgetsBinding.instance.ensureVisualUpdate();
                 }),
-      if (fallback)
+      if (fallback && widget.showCatalogBadge)
         Positioned(
             left: 3,
             top: 3,

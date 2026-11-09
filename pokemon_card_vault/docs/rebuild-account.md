@@ -8,8 +8,9 @@ description. The separate theme card is removed; the tooltip names the current
 appearance and retains any unsaved-preference message. Default preserves the existing Rebuild palette and Flutter icons;
 Dungeon Crawler uses the supplied map as the main shell background and the chest
 as the bottom navigation background, with warm brown/cream/gold navigation and
-toolbar colours. Cardex and Portfolio pixel art appear in bottom navigation and
-the Profile shortcuts; remaining icon slots fall back to Flutter. The local PNGs are bundled
+toolbar colours. Cardex, Portfolio and Scanner pixel art appear in bottom
+navigation; Cardex and Portfolio also appear in the Profile shortcuts.
+Remaining icon slots fall back to Flutter. The local PNGs are bundled
 from `assets/images/Dungeon Crawler Themed/`, without network requests or changes
 to card images. Existing panels and pushed detail pages retain their surfaces.
 
@@ -28,6 +29,21 @@ marketplace artwork. PNGs remain in assets; the existing assets/icons bundle
 already includes Cardex.png. ThemedIcon uses crisp local pixel art and a Flutter
 fallback for missing slots or failed assets; existing touch targets/labels stay
 on the parent controls.
+
+### Poko wardrobe
+
+The wardrobe button next to the Profile palette opens a draft outfit editor
+with Head, Hand and Feet slots and None for each. The seven supplied PNGs form
+an aligned silver background, Poko body and optional accessories. Save look
+persists stable IDs on this device through WardrobeController -> WardrobeService
+-> WardrobeProvider; cancel/back does not apply the draft. Save failure leaves
+the previous look untouched and keeps the draft available to retry.
+
+Guests can use the same editor; this is not an account-picture upload and does
+not call APIs. Only the Dungeon Crawler toolbar displays the saved Poko; Default
+continues to display pokoin-96.png. Switching themes preserves the outfit. Sprite
+bounds and layer order are documented in style/dungeon_crawler/README.md.
+No wardrobe/theme tests or harnesses are created or run, per user preference.
 
 Historical validation was intentionally limited, per the user's request, to the single
 `test/rebuild/app_appearance_test.dart` initial-app UI test: default appearance,

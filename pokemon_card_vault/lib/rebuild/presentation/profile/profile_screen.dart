@@ -5,6 +5,7 @@ import 'component/account_activity.dart';
 import 'component/account_settings.dart';
 import 'component/wallet_overview.dart';
 import 'component/appearance_settings.dart';
+import 'component/wardrobe_button.dart';
 import '../shared/atomics/themed_icon.dart';
 import '../../style/app_theme_icons.dart';
 
@@ -51,6 +52,7 @@ class ProfileScreen extends StatelessWidget {
                         'Esplora e testa Pokoin senza account.')),
                 const SizedBox(width: 4),
                 const AppearanceSettings(),
+                const WardrobeButton(),
               ])),
           if (user == null)
             FilledButton(

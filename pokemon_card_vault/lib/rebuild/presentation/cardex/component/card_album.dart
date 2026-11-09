@@ -8,6 +8,8 @@ import '../../../constants/cardex_artwork_constants.dart';
 import '../../../constants/cardex_album_layout_constants.dart';
 import '../../shared/component/card_ownership_edge_controls.dart';
 import '../atomics/album_card.dart';
+import '../atomics/album_card_caption.dart';
+import '../atomics/collection_listing_button.dart';
 
 /// Sei tasche per foglio; su tablet due fogli affiancati. Si costruisce solo
 /// lo sfoglio visibile, non tutte le miniature del catalogo.
@@ -20,6 +22,7 @@ class CardAlbum extends StatefulWidget {
       this.onLanguageSelected,
       this.onPageVisible,
       this.sourceCardCount,
+      this.actionBuilder,
       required this.onOpen});
   final List<MarketplaceCardPreview> cards;
   final CardCollection collection;
@@ -30,6 +33,7 @@ class CardAlbum extends StatefulWidget {
   /// Unfiltered source progress also changes when a filter yields no cards.
   final int? sourceCardCount;
   final ValueChanged<MarketplaceCardPreview> onOpen;
+  final Widget Function(MarketplaceCardPreview)? actionBuilder;
 
   @override
   State<CardAlbum> createState() => _CardAlbumState();
@@ -120,7 +124,11 @@ class _CardAlbumState extends State<CardAlbum> {
       final rowHeight =
           (tileWidth - 2) / CardexArtworkConstants.artworkAspectRatio +
               2 +
-              CardOwnershipEdgeControls.railHeight(context);
+              CardOwnershipEdgeControls.railHeight(context) +
+              AlbumCardCaption.footerHeight(context) +
+              (widget.actionBuilder == null
+                  ? 0
+                  : CollectionListingButton.height(context));
       final numberHeight = MediaQuery.textScalerOf(context)
               .scale(CardexAlbumLayoutConstants.pageNumberFontSize) *
           CardexAlbumLayoutConstants.pageNumberLineHeight;
@@ -252,6 +260,7 @@ class _CardAlbumState extends State<CardAlbum> {
                         key: ValueKey(card.id),
                         card: card,
                         artworkOnly: true,
+                        collectionAction: widget.actionBuilder?.call(card),
                         quantity: widget.collection.quantityFor(card.id),
                         viewportPosition: _viewportPosition,
                         pageChanges: _pages,

@@ -24,6 +24,7 @@ import '../account/account_screen.dart';
 import '../shared/component/collection_language_button.dart';
 import '../shared/component/collection_artwork_scope.dart';
 import '../shared/atomics/themed_icon.dart';
+import '../shared/atomics/pokoin_brand_mark.dart';
 import '../../style/app_theme_icons.dart';
 
 class MarketplaceScreen extends StatefulWidget {
@@ -224,11 +225,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         appBar: AppBar(
           title: LayoutBuilder(builder: (context, constraints) {
             if (constraints.maxWidth < 64) {
-              return Image.asset('assets/brand/pokoin-96.png',
-                  width: 30, height: 30, semanticLabel: 'pokoin');
+              return const PokoinBrandMark();
             }
             return Row(children: [
-              Image.asset('assets/brand/pokoin-96.png', width: 30, height: 30),
+              const PokoinBrandMark(),
               const SizedBox(width: 10),
               const Flexible(
                   child: Text('pokoin',
@@ -295,8 +295,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                       }),
                   2 => PortfolioScreen(
                       controller: _controller.cardex,
+                      historyController: _controller.portfolio,
                       onOpen: _showCollectionCard),
                   3 => CardexScreen(
+                      listingActions: _controller.collectionListing,
                       controller: _controller.cardex,
                       onOpen: _showCollectionCard),
                   4 => ProfileScreen(

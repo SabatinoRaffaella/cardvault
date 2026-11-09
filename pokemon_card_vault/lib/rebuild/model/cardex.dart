@@ -13,10 +13,41 @@ class OwnedCard {
       this.listingId = '',
       this.sourceListingId = '',
       this.language = '',
+      this.fromListing = false,
+      this.listingStatus = '',
+      this.isNft = false,
+      this.attributes = const {},
       this.holo = false,
       this.reverse = false});
 
-  factory OwnedCard.fromJson(Map<String, dynamic> json) => OwnedCard(
+  factory OwnedCard.fromJson(Map<String, dynamic> json,
+          {bool fromListing = false}) =>
+      OwnedCard(
+        fromListing: fromListing,
+        listingStatus:
+            fromListing ? '${json['status'] ?? ''}'.trim().toLowerCase() : '',
+        isNft: json['ownershipType'] == 'nft' ||
+            json['fulfillmentMode'] == 'nft_only' ||
+            json['nftStatus'] == 'owned',
+        attributes: Map.unmodifiable({
+          for (final key in const [
+            'condition',
+            'signed',
+            'firstEdition',
+            'graded',
+            'gradingCompany',
+            'grade',
+            'certificationId',
+            'sealed',
+            'altered',
+            'shippingAvailable',
+            'location',
+            'sellerComment',
+            'foilState',
+            'variantState',
+          ])
+            if (json.containsKey(key)) key: json[key]
+        }),
         id: '${json['id'] ?? ''}'.trim(),
         listingId: '${json['listingId'] ?? ''}'.trim(),
         sourceListingId: '${json['sourceListingId'] ?? ''}'.trim(),
@@ -26,6 +57,11 @@ class OwnedCard {
           expansion: '${json['setName'] ?? ''}',
           number: '${json['collectorNumber'] ?? ''}',
           imageUrl: '${json['cardImageUrl'] ?? ''}',
+          pricePkn: switch (double.tryParse('${json['pricePkn'] ?? ''}')) {
+            final double price when price.isFinite && price > 0 => price,
+            _ => null,
+          },
+          canonicalPath: '${json['canonicalPath'] ?? ''}',
         ),
         quantity: num.tryParse('${json['quantity'] ?? 0}')?.toInt() ?? 0,
         language: '${json['language'] ?? ''}',
@@ -37,15 +73,29 @@ class OwnedCard {
   final String id, listingId, sourceListingId;
   final int quantity;
   final String language;
+  final bool fromListing, isNft;
+  final String listingStatus;
+  final Map<String, dynamic> attributes;
   final bool holo, reverse;
 }
 
 class CardCollection {
-  CardCollection({required this.status, List<OwnedCard> items = const []})
-      : items = List.unmodifiable(items
+  CardCollection(
+      {required this.status,
+      List<OwnedCard> items = const [],
+      List<OwnedCard> holdings = const [],
+      List<OwnedCard> listedItems = const []})
+      : holdings = List.unmodifiable(holdings),
+        items = List.unmodifiable(items
+            .where((item) => item.quantity > 0 && item.card.id.isNotEmpty)),
+        listedItems = List.unmodifiable(listedItems
             .where((item) => item.quantity > 0 && item.card.id.isNotEmpty));
   final CollectionStatus status;
   final List<OwnedCard> items;
+  final List<OwnedCard> holdings;
+
+  /// Solo stock attivo proveniente dagli owner listing, mai dai record Held.
+  final List<OwnedCard> listedItems;
 
   /// Solo ID canonici Pokoin: nomi simili non rendono posseduta un'altra stampa.
   int quantityFor(String id) => items

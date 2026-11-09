@@ -24,6 +24,8 @@ class AlbumCard extends StatelessWidget {
       this.viewportPosition,
       this.pageChanges,
       this.artworkOnly = false,
+      this.priceLabel,
+      this.collectionAction,
       required this.onOpen});
   final MarketplaceCardPreview card;
   final int quantity;
@@ -34,6 +36,8 @@ class AlbumCard extends StatelessWidget {
   final Listenable? pageChanges;
   // Portfolio keeps the complete card. Only the Cardex album opts into this.
   final bool artworkOnly;
+  final String? priceLabel;
+  final Widget? collectionAction;
   final VoidCallback onOpen;
 
   @override
@@ -114,6 +118,7 @@ class AlbumCard extends StatelessWidget {
                               cardId: card.id,
                               language: artworkScope.languageFor(card.id),
                               fallbackUrl: imageUrl,
+                              showCatalogBadge: !artworkOnly,
                               imageBuilder: scan);
 
                       return CardOwnershipArtwork(
@@ -127,26 +132,27 @@ class AlbumCard extends StatelessWidget {
                           cardName: card.name,
                           ownership: view,
                           showControls: false,
-                          caption: artworkOnly
-                              ? AlbumCardCaption(
-                                  overlay: true,
-                                  number: card.number,
-                                  expansion: card.expansion,
-                                  status: view.hasConfirmedCopies
-                                      ? null
-                                      : !ownershipKnown || !owned
-                                          ? status
-                                          : null)
-                              : null);
+                          caption: null);
                     })),
               )),
+              if (artworkOnly)
+                SizedBox(
+                    height: AlbumCardCaption.footerHeight(context),
+                    child: Align(
+                        alignment: Alignment.topLeft,
+                        child: AlbumCardCaption(
+                            number: card.number, expansion: card.expansion))),
+              if (collectionAction != null) collectionAction!,
               if (!artworkOnly)
                 SizedBox(
-                  height: AlbumCardCaption.footerHeight(context),
+                  height: AlbumCardCaption.footerHeight(context,
+                      showPrice: priceLabel != null),
                   child: Align(
                       alignment: Alignment.topLeft,
                       child: AlbumCardCaption(
-                          number: card.number, expansion: card.expansion)),
+                          number: card.number,
+                          expansion: card.expansion,
+                          priceLabel: priceLabel)),
                 ),
             ])),
       ),

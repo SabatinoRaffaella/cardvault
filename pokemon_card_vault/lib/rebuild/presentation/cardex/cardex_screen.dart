@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../controller/cardex_controller.dart';
+import '../../controller/collection_listing_controller.dart';
+import 'atomics/collection_listing_button.dart';
 import '../../constants/cardex_album_layout_constants.dart';
 import '../../model/cardex.dart';
 import '../../model/marketplace_home.dart';
@@ -10,9 +12,13 @@ import 'atomics/collection_sync_action.dart';
 
 class CardexScreen extends StatelessWidget {
   const CardexScreen(
-      {super.key, required this.controller, required this.onOpen});
+      {super.key,
+      required this.controller,
+      this.listingActions,
+      required this.onOpen});
   final CardexController controller;
   final ValueChanged<MarketplaceCardPreview> onOpen;
+  final CollectionListingController? listingActions;
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
@@ -84,6 +90,10 @@ class CardexScreen extends StatelessWidget {
                           key: ValueKey(
                               '${controller.viewingCollection ? "collection" : controller.expansion?.slug}-${controller.filter.name}'),
                           cards: visible,
+                          actionBuilder: (card) => CollectionListingButton(
+                              card: card,
+                              cardex: controller,
+                              controller: listingActions),
                           sourceCardCount: controller.cards.length,
                           collection: controller.collection,
                           ownershipFor: controller.ownershipFor,

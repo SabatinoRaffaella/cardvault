@@ -21,10 +21,12 @@ class InventoryListing {
           'quantity': json['quantityAvailable'],
           'holo': json['holo'] == true || json['foilState'] == 'holo',
           'reverse': json['reverse'] == true || json['foilState'] == 'reverse',
-        }),
+        }, fromListing: true),
         status: '${json['status'] ?? ''}'.trim().toLowerCase(),
       );
 
   bool get isOwned =>
       (status == 'active' || status == 'paused') && item.quantity > 0;
+
+  bool get isListed => status == 'active' && item.quantity > 0;
 }

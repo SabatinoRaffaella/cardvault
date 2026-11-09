@@ -4,6 +4,95 @@ The bottom bar is Market, Scansiona, Portfolio, Cardex, Profilo. Wallet is now
 inside Profilo, alongside account features; scanning remains an inactive
 Rebuild screen. The existing cart action is preserved.
 
+## Portfolio: active listings and value history (2026-11-09)
+
+Portfolio now displays only authenticated owner listings with `status=active`
+and positive available quantity. `CollectionService` carries these rows separately
+as `CardCollection.listedItems`; Cardex keeps its reconciled owned inventory,
+including paused and independent Held records. Filtering is by listing provenance
+and status, never card name or language. Thus a held English Audino does not
+establish a Portfolio entry. Existing per-print grouping and lazy artwork remain.
+
+The card footer shows the asking price in PKN below the expansion. For multiple
+active listings of the same print and selected owned language, it shows the lowest
+available asking price with `Da`; missing prices remain explicitly unavailable.
+Quantity and language controls in Portfolio use active listed stock only.
+
+A small fixed tab on the right edge opens/closes a side drawer without losing
+the grid's scroll position. It can also close through the header, backdrop,
+Android Back or Escape. History loads only on first opening and explicit retry/
+refresh, with no polling; date ranges filter the data locally. Credentials and
+history are not persisted, and account changes clear state and discard late
+responses. Controller/service/provider separation is retained.
+
+The live dashboard at https://pokoin.com/dashboard was checked read-only:
+`fetchPortfolioHistory` uses authenticated `GET /api/marketplace-portfolio-history`
+with a Firebase bearer. `PortfolioHistoryProvider` reuses that endpoint through
+`AccountApiProvider`; the response is a `days` array with `date`/`day`,
+`currencyPkn`, `cardsKnown`, `cardsValuePkn`, `cardsHeld` and `cardsPriced`
+(also supported under `assets`, as in the site's normalizer). The chart shows
+actual daily total value, with cards and liquidity distinguished and touch
+selection. It does not invent forecasts or market data. This dashboard history
+covers the whole account, including held cards and liquidity, rather than only
+the active listing grid; the drawer explains that distinction. Card valuation
+uses the site's sold-price history, while grid prices are current asking prices.
+
+Validation: changed Dart sources pass analysis. No tests/harnesses were created,
+copied or run, respecting the current workspace QA scope. Signed-in device
+verification of the user's Audino and history remains a phone check. The profile
+ARM64 APK was rebuilt and promoted through the standard helper, with ABI and
+SHA256 verification and at most three preceding versions. Portfolio feature APK SHA256:
+`A1E7132F47DA32857A22331D1BEAF5A88303BC51C5392FBF4242D9D855FBD8C0`.
+
+## Cardex: Collection / Listing controls (2026-11-09)
+
+The old Catalogo overlay identified a missing localized scan, not sale status.
+Cardex now keeps artwork free of metadata/status overlays: the number/expansion
+caption and a Collection/Listing button are below the illustration. Row geometry
+reserves both footers without shrinking the art window. The catalog fallback
+overlay remains available to other existing consumers of CollectionCardArtwork.
+
+The button is enabled only for validated physical owned records in the selected
+owned language, with a variant picker when multiple records match. Missing,
+unknown and NFT-only records cannot be published from this control. Selecting
+Listing shows a price-per-copy PKN field and an explicit confirmation for the
+displayed record's quantity; no catalog card is turned into owned stock.
+
+The live public MyPokoin collection bundle was inspected read-only. Its List
+action sends authenticated POST /api/marketplace-listings with
+source=pokoin_collection and sourceListingId equal to the holding record ID;
+Hold uses authenticated PATCH with status=inactive. The app uses the same
+endpoints and provenance, reuses an existing linked listing instead of creating
+another on each cycle, and requires a valid saved ship-from country for a new
+listing. Condition, language and variant attributes are preserved. Only Pokoin
+publication is requested; no CardTrader publication target is added.
+
+For a listing backed by a separate holding, returning to Collection uses inactive
+and exposes the retained holding again. For standalone native stock without a
+holding record, it uses paused so the card stays owned without inventing a
+Firestore holding or deleting stock; Portfolio excludes both inactive and paused
+listings. Reconciliation continues to use explicit record links and canonical IDs.
+
+CollectionListingController delegates to CollectionListingService and the
+authenticated CollectionListingProvider. Before writing, the source is re-read;
+after writing, owner/card/status/price are checked through a separate GET. The
+UI reports success only after that readback. Busy actions cannot double-submit;
+uncertain writes block further publication and offer read-only Verifica esito.
+Account changes clear pending state and ignore stale responses. Collection and
+Portfolio reload together after a confirmed change; holdings are never removed
+as part of publication.
+
+At the user's request, only collection_listing_switch_test.dart ran in the
+existing tests/cardex/rebuild-cardex-check-20261015 harness, with the thirteen
+required source/test files synchronized. Seven focused cases cover the dialog's
+successful switch, rejected switch, linked/native round trips without duplicate
+stock, an uncertain committed response verified without another POST, mismatched
+persisted price, and missing ownership/invalid price. HTTP requests are mocked;
+no real account listing was changed. No unrelated suites or visual QA harnesses
+were created or run. Source/test analysis is clean. The current ARM64 profile APK
+was rebuilt and verified through the standard helper, SHA256:
+`E8F43B3FFC49A44EF8B80F781107D9CDC6D58101943327AAA91B902C929E0C1B`.
+
 Cardex uses an animated, horizontally swiped album with six thumbnails per
 leaf (2 × 3 on phones/leaves narrower than 420px and with large text;
 3 × 2 on wider leaves). Screens at least 700 logical pixels wide
@@ -516,8 +605,9 @@ APK backed up; no device installation or production deployment was performed.
   The existing discovery preview and cart workflows are preserved.
 
 The legacy collection service/screen are references, not runtime dependencies.
-Portfolio shows reconciled owner listings and held records with quantities. This change does
-not introduce collection writes or valuation. Rebuild login and guest mode are
+Cardex retains reconciled owner listings and held records with quantities;
+Portfolio now filters active listings and adds account history as described above.
+No collection writes are introduced. Rebuild login and guest mode are
 now connected to the shared Firebase account; see `docs/rebuild-account.md`.
 
 Verification: `test/rebuild/cardex_test.dart` covers DAO contract/errors, zero

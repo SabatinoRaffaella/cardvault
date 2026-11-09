@@ -57,6 +57,11 @@ class CollectionService {
         if (inventoryComplete && holdings != null) {
           emit(CardCollection(
               status: CollectionStatus.ready,
+              holdings: holdings!,
+              listedItems: listings!
+                  .where((row) => row.isListed)
+                  .map((row) => row.item)
+                  .toList(),
               items: const InventoryReconciliationService()
                   .reconcile(holdings!, listings!)));
         } else {
@@ -68,7 +73,12 @@ class CollectionService {
               .toList();
           if (preview.isNotEmpty) {
             emit(CardCollection(
-                status: CollectionStatus.loading, items: preview));
+                status: CollectionStatus.loading,
+                items: preview,
+                listedItems: listings!
+                    .where((row) => row.isListed)
+                    .map((row) => row.item)
+                    .toList()));
           }
         }
       }

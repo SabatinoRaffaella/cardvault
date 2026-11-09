@@ -8,7 +8,7 @@ in Profile -> Tema dell'app (also available beside the guest description).
 and warm brown/cream/gold toolbar and navigation palette. The main five-tab
 shell uses Mappa.png as its background and Botttom_bar.png behind the existing
 navigation controls. Default retains its original palette and Flutter icons.
-Cardex and Portfolio use supplied custom icons; unfilled slots retain Flutter
+Cardex, Portfolio and Scanner use supplied custom icons; unfilled slots retain Flutter
 icons. Portfolio is also used by the collection shortcut in Profile.
 
 ## Adding artwork
@@ -16,7 +16,8 @@ icons. Portfolio is also used by the collection shortcut in Profile.
 Keep bitmap files under `assets/`, not under `lib/style/`. Register their exact
 case-sensitive path in pubspec when required, then add an AppThemeIcon slot to
 the manifest. The existing `assets/icons/` declaration already bundles
-`assets/icons/Cardex.png` and `assets/icons/Portfolio.png`; no duplicate copy or
+`assets/icons/Cardex.png`, `assets/icons/Portfolio.png` and
+`assets/icons/Scanner.png`; no duplicate copy or
 network download is needed.
 The explicit `assets/images/Dungeon Crawler Themed/` bundle contains Mappa.png
 and Botttom_bar.png. Original colours are preserved: the map covers the body
@@ -33,3 +34,26 @@ Pixel art is drawn without smoothing and with bounded dimensions; changing the
 theme must not fetch card images, recreate services, log out users, clear the
 cart, or affect API/search/inventory data. Existing card-specific palettes and
 album crops remain independent of this app-wide appearance.
+
+## Poko wardrobe
+
+Profile places a wardrobe button beside the palette, available to guests too.
+Head (Batty/Skellyyyy), hand (Lumachina) and feet (fairy boots/magic carpet)
+are independent slots; each includes None. Preview changes are drafts until
+Save look; cancelling leaves the saved outfit unchanged. Saving failures keep
+the previous look and offer a retry. Selections are device-local cosmetics,
+not an account avatar upload or a server-side inventory/unlock feature.
+
+The toolbar uses the composed Poko only in Dungeon Crawler; Default keeps its
+original brand PNG. The editor is available from either theme. WardrobeController
+is owned at the composition root, independently of login, cart and API services.
+Its service validates accessory IDs; WardrobeProvider stores one versioned
+SharedPreferences snapshot. Unknown IDs become empty slots.
+
+`assets/icons/wardrobe/` contains the original trimmed PNGs. The five subfolders
+are explicitly bundled. `wardrobe_style.dart` owns an 80 x 80 logical canvas,
+per-sprite bounds and local paths. Background, carpet, body, headgear, boots and
+hand are drawn in that order with no smoothing. The canvas is reused for the
+editor, choices and toolbar, without cropping or rewriting supplied images.
+For another accessory, add its slot/label/ID to wardrobe_constants.dart and its
+path/bounds to WardrobeStyle (and adjust layering for a new type of foot item).

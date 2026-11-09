@@ -7,6 +7,7 @@ import '../service/collection_service.dart';
 import '../model/expansion_era.dart';
 import '../service/expansion_era_service.dart';
 import '../service/card_ownership_service.dart';
+import '../service/portfolio_service.dart';
 import '../model/card_ownership.dart';
 import '../constants/cardex_pagination_constants.dart';
 import 'collection_artwork_controller.dart';
@@ -83,6 +84,17 @@ class CardexController extends ChangeNotifier {
   CardOwnership ownershipFor(String cardId) =>
       _ownership.describe(collection, cardId,
           selectedLanguage: artworkLanguageFor(cardId));
+
+  CardCollection get portfolioCollection =>
+      PortfolioService.listedCollection(collection);
+
+  CardOwnership portfolioOwnershipFor(String cardId) =>
+      _ownership.describe(portfolioCollection, cardId,
+          selectedLanguage: artworkLanguageFor(cardId));
+
+  double? portfolioPriceFor(String cardId) =>
+      PortfolioService.priceFor(collection, cardId,
+          language: portfolioOwnershipFor(cardId).selectedLanguage);
 
   void selectOwnedLanguage(String cardId, String language) {
     if (_disposed || !ownershipKnown) return;

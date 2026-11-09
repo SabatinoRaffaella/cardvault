@@ -14,6 +14,8 @@ import '../service/marketplace_suggestion_service.dart';
 import 'card_details_controller.dart';
 import '../service/card_service.dart';
 import 'cardex_controller.dart';
+import 'portfolio_controller.dart';
+import 'collection_listing_controller.dart';
 import 'account_controller.dart';
 import 'profile_controller.dart';
 import 'scanner_controller.dart';
@@ -57,6 +59,10 @@ class MarketplaceController extends ChangeNotifier {
       service: _cartService, cards: _cardService ??= CardService());
   final CardexController? _injectedCardex;
   final AccountController account;
+  late final PortfolioController portfolio =
+      PortfolioController(userIds: account.watchUserId);
+  late final CollectionListingController collectionListing =
+      CollectionListingController(userIds: account.watchUserId);
   final bool _ownsAccount;
   final ProfileService? _profileService;
   late final ProfileController profile =
@@ -120,6 +126,8 @@ class MarketplaceController extends ChangeNotifier {
     if (_selectedTab == tab) return;
     _selectedTab = tab;
     if (tab == 2 || tab == 3) cardex.start(loadCatalog: tab == 3);
+    if (tab == 2) portfolio.start();
+    if (tab == 3) collectionListing.start();
     if (tab == 4) profile.start();
     notifyListeners();
   }
@@ -184,6 +192,8 @@ class MarketplaceController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    portfolio.dispose();
+    collectionListing.dispose();
     scanner.dispose();
     clipboard.dispose();
     if (_ownsHomeService) _homeService?.dispose();

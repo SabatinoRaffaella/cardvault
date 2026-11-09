@@ -13,9 +13,22 @@ On the `AppMobile` branch, choose the application target explicitly:
 
 The previous application is contained in `lib/old/`. Firebase configuration
 remains shared at `lib/firebase_options.dart`; this branch has no root
-`lib/main.dart`. Existing web scripts and the APK script's default target
-continue to select the previous application; pass Rebuild's target explicitly
-for the current mobile app.
+`lib/main.dart`. Existing web scripts continue to select the previous application;
+the local phone APK helper defaults to Rebuild.
+
+### Mobile Rebuild 1.2.0 (build 62)
+
+- Cardex: explicit Collection / Listing switch with publication confirmation
+  and read-back verification, keeping ownership and sale status distinct.
+- Portfolio: active listings and asking prices in PKN, plus an on-demand drawer
+  with the account's historical value chart (cards and liquidity).
+- Dungeon Crawler: Scanner pixel art and a local Poko wardrobe beside the
+  Profile palette, with independent head, hand and feet choices.
+
+The version is maintained in `pubspec.yaml` as `1.2.0+62`. The visible version
+is 1.2.0; Android build numbers increase independently. This is a feature/minor
+update, not a breaking 2.0 migration. The profile ARM64 APK is a local handoff
+artifact and is not committed or published as a GitHub release.
 
 ## Live App
 

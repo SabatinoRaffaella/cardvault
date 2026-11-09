@@ -2,7 +2,7 @@ name: pokoin
 description: "Pokoin marketplace, wallet, and card reserve app"
 publish_to: 'none'
 
-version: 1.1.0+59
+version: 1.2.0+62
 
 environment:
   sdk: '>=3.6.0 <4.0.0'
@@ -101,6 +101,11 @@ flutter:
     - assets/images/
     - assets/images/Dungeon Crawler Themed/
     - assets/icons/
+    - assets/icons/wardrobe/base/
+    - assets/icons/wardrobe/backgrounds/
+    - assets/icons/wardrobe/headgear/
+    - assets/icons/wardrobe/hand/
+    - assets/icons/wardrobe/foot/
     - assets/animations/
     - assets/sounds/
     - assets/pokoin-icon.png

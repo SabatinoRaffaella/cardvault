@@ -7,14 +7,18 @@ class AlbumCardCaption extends StatelessWidget {
       required this.number,
       required this.expansion,
       this.overlay = false,
+      this.priceLabel,
       this.status});
   final String number, expansion;
   final bool overlay;
   final String? status;
+  final String? priceLabel;
 
   /// Portfolio reserves two metadata lines, independent of loading/counts.
-  static double footerHeight(BuildContext context) =>
-      MediaQuery.textScalerOf(context).scale(11) * 1.2 * 2 + 8;
+  static double footerHeight(BuildContext context, {bool showPrice = false}) =>
+      MediaQuery.textScalerOf(context).scale(11) * 1.2 * 2 +
+      8 +
+      (showPrice ? MediaQuery.textScalerOf(context).scale(13) * 1.25 + 2 : 0);
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -56,5 +60,16 @@ class AlbumCardCaption extends StatelessWidget {
                       shadows: overlay
                           ? const [Shadow(color: Colors.black, blurRadius: 3)]
                           : null)),
+            if (priceLabel != null) ...[
+              const SizedBox(height: 2),
+              Text(priceLabel!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontSize: 13,
+                      height: 1.25,
+                      fontWeight: FontWeight.w700)),
+            ],
           ]));
 }

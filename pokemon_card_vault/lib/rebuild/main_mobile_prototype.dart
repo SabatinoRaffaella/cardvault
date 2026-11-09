@@ -18,6 +18,8 @@ import 'provider/cart_remote_provider.dart';
 import 'controller/app_appearance_controller.dart';
 import 'presentation/shared/component/app_appearance_scope.dart';
 import 'style/app_style.dart';
+import 'controller/wardrobe_controller.dart';
+import 'presentation/shared/component/wardrobe_scope.dart';
 
 /// Avvio indipendente: flutter run -t lib/rebuild/main_mobile_prototype.dart
 /// Marketplace, account e carrello persistente locale/remoto.
@@ -55,6 +57,7 @@ class MobileMarketplacePrototypeApp extends StatefulWidget {
 class _MobileMarketplacePrototypeAppState
     extends State<MobileMarketplacePrototypeApp> {
   final _appearance = AppAppearanceController();
+  final _wardrobe = WardrobeController();
   late MarketplaceController _controller;
   late AccountController _account;
   late CartService _cartService;
@@ -64,6 +67,7 @@ class _MobileMarketplacePrototypeAppState
   void initState() {
     super.initState();
     unawaited(_appearance.load());
+    unawaited(_wardrobe.load());
     _createController();
   }
 
@@ -117,6 +121,7 @@ class _MobileMarketplacePrototypeAppState
   @override
   void dispose() {
     _appearance.dispose();
+    _wardrobe.dispose();
     _controller.dispose();
     _account.dispose();
     if (_ownsCartService) _cartService.dispose();
@@ -125,30 +130,33 @@ class _MobileMarketplacePrototypeAppState
 
   @override
   Widget build(BuildContext context) {
-    return AppAppearanceScope(
-        controller: _appearance,
-        child: ListenableBuilder(
-            listenable: _appearance,
-            builder: (context, _) => MaterialApp(
-                  title: 'Pokoin',
-                  debugShowCheckedModeBanner: false,
-                  theme: AppStyle.forAppearance(_appearance.appearance),
-                  home: MarketplaceScreen(
-                      controller: _controller,
-                      showDiscovery: widget.showDiscovery),
-                  // Il gate avvolge il Navigator: logout rimuove anche eventuali route
-                  // private aperte, impedendo di riaprirle con il pulsante Indietro.
-                  builder: (context, navigator) => ListenableBuilder(
-                      listenable: _account,
-                      builder: (context, _) => _account.session.canBrowse
-                          ? navigator!
-                          : Navigator(
-                              key: ValueKey(_account),
-                              onGenerateRoute: (_) => MaterialPageRoute<void>(
-                                builder: (_) =>
-                                    AccountScreen(controller: _account),
-                              ),
-                            )),
-                )));
+    return WardrobeScope(
+      controller: _wardrobe,
+      child: AppAppearanceScope(
+          controller: _appearance,
+          child: ListenableBuilder(
+              listenable: _appearance,
+              builder: (context, _) => MaterialApp(
+                    title: 'Pokoin',
+                    debugShowCheckedModeBanner: false,
+                    theme: AppStyle.forAppearance(_appearance.appearance),
+                    home: MarketplaceScreen(
+                        controller: _controller,
+                        showDiscovery: widget.showDiscovery),
+                    // Il gate avvolge il Navigator: logout rimuove anche eventuali route
+                    // private aperte, impedendo di riaprirle con il pulsante Indietro.
+                    builder: (context, navigator) => ListenableBuilder(
+                        listenable: _account,
+                        builder: (context, _) => _account.session.canBrowse
+                            ? navigator!
+                            : Navigator(
+                                key: ValueKey(_account),
+                                onGenerateRoute: (_) => MaterialPageRoute<void>(
+                                  builder: (_) =>
+                                      AccountScreen(controller: _account),
+                                ),
+                              )),
+                  ))),
+    );
   }
 }

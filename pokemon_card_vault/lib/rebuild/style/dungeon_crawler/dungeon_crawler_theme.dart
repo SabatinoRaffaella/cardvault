@@ -10,6 +10,8 @@ abstract final class DungeonCrawlerTheme {
         AppThemeIconAsset('assets/icons/Cardex.png', width: 26, height: 28),
     AppThemeIcon.portfolio:
         AppThemeIconAsset('assets/icons/Portfolio.png', width: 28, height: 28),
+    AppThemeIcon.scanner:
+        AppThemeIconAsset('assets/icons/Scanner.png', width: 28, height: 28),
   });
   static const surfaces = AppThemeSurfaces(
     pageBackground: 'assets/images/Dungeon Crawler Themed/Mappa.png',

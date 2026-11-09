@@ -15,12 +15,14 @@ class AlbumGrid extends StatelessWidget {
       required this.collection,
       this.ownershipFor,
       this.onLanguageSelected,
+      this.priceLabelFor,
       required this.onOpen});
   final List<MarketplaceCardPreview> cards;
   final CardCollection collection;
   final CardOwnership Function(String)? ownershipFor;
   final void Function(String, String)? onLanguageSelected;
   final ValueChanged<MarketplaceCardPreview> onOpen;
+  final String Function(MarketplaceCardPreview)? priceLabelFor;
 
   @override
   Widget build(BuildContext context) =>
@@ -37,13 +39,15 @@ class AlbumGrid extends StatelessWidget {
                 mainAxisExtent: (width - 6) / CardexStyle.cardAspectRatio +
                     6 +
                     CardOwnershipEdgeControls.railHeight(context) +
-                    AlbumCardCaption.footerHeight(context)),
+                    AlbumCardCaption.footerHeight(context,
+                        showPrice: priceLabelFor != null)),
             itemBuilder: (context, index) {
               final card = cards[index];
               return DecoratedBox(
                   decoration: const BoxDecoration(color: CardexStyle.seam),
                   child: AlbumCard(
                       card: card,
+                      priceLabel: priceLabelFor?.call(card),
                       quantity: collection.quantityFor(card.id),
                       ownership: ownershipFor?.call(card.id),
                       onLanguageSelected: onLanguageSelected == null
