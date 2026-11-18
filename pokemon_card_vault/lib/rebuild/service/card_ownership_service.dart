@@ -25,7 +25,8 @@ class CardOwnershipService {
           cardId: cardId,
           status: collection.status,
           total: 0,
-          evidence: collection.status == CollectionStatus.loading
+          evidence: collection.status == CollectionStatus.loading &&
+                  !collection.fromCache
               ? _evidence(collection, cardId)
               : null,
           languages: const []);

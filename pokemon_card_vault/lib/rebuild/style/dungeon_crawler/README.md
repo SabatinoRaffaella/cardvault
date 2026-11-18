@@ -55,5 +55,8 @@ are explicitly bundled. `wardrobe_style.dart` owns an 80 x 80 logical canvas,
 per-sprite bounds and local paths. Background, carpet, body, headgear, boots and
 hand are drawn in that order with no smoothing. The canvas is reused for the
 editor, choices and toolbar, without cropping or rewriting supplied images.
+Headgear uses the original sprite dimensions: Batty 44 x 20 at (15, 16), and
+the reduced Skellyyyy 41 x 26 at (19, 11). Their brims overlap Poko's crown
+without the previous floating gap or enlarging Skelly back to its old size.
 For another accessory, add its slot/label/ID to wardrobe_constants.dart and its
 path/bounds to WardrobeStyle (and adjust layering for a new type of foot item).

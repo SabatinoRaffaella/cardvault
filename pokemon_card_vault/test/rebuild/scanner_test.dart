@@ -38,6 +38,7 @@ const other = ScannerCandidate(
 class Source extends ScannerService {
   List<ScannedCard> rows = [];
   bool failAdd = false, failSave = false;
+  ScannerRequestFailure? requestFailure;
   Completer<ScannerBatch>? pending;
   Completer<ScannerMarketData>? pendingPrice;
   int additions = 0, saves = 0, prepares = 0;
@@ -80,6 +81,7 @@ class Source extends ScannerService {
       ScanDestination destination) async {
     saves++;
     saved = cards;
+    if (requestFailure != null) throw requestFailure!;
     if (failSave) throw const FormatException('Possesso non confermato');
   }
 }
@@ -159,6 +161,9 @@ void main() {
         jsonDecode(api.calls[1].body)['patch'], containsPair('pricePkn', 12.5));
     expect(
         jsonDecode(api.calls[1].body)['patch'], containsPair('cardId', '124'));
+    // The deployed store already marks a cardId patch as reviewed. Sending
+    // confirm as well creates duplicate SQL assignments to reviewed.
+    expect(jsonDecode(api.calls[1].body)['patch'], isNot(contains('confirm')));
     expect(api.calls.last.url.path, '/api/marketplace-collection');
     expect(api.submitted, true);
   });
@@ -169,6 +174,41 @@ void main() {
         ScannerService(provider: api.provider)
             .save('alice', 'batch', [row], ScanDestination.collection),
         throwsFormatException);
+  });
+  test('HTTP failures identify the operation without exposing server content',
+      () async {
+    final provider = ScannerProvider(
+        token: (_) async => 'private-token',
+        client: MockClient((_) async =>
+            http.Response('{"error":"private server detail"}', 500)));
+    await expectLater(
+        provider.patch('alice', row),
+        throwsA(isA<ScannerRequestFailure>()
+            .having((e) => e.action, 'action', 'item')
+            .having((e) => e.statusCode, 'status', 500)
+            .having(
+                (e) => e.message,
+                'user message',
+                allOf(contains('Aggiornamento della carta'),
+                    contains('HTTP 500'), isNot(contains('private'))))));
+  });
+  test('HTTP save failure keeps the staged card and allows a safe retry',
+      () async {
+    final source = Source()
+      ..requestFailure = const ScannerRequestFailure('item', 500);
+    final controller = ScannerController(service: source)..setUser('alice');
+    await controller.start();
+    capture(controller);
+    expect(await controller.save(), false);
+    expect(controller.message, contains('HTTP 500'));
+    expect(controller.message, contains('Aggiornamento della carta'));
+    expect(controller.cards.single.isLocal, false);
+    expect(controller.confirmationPending, true);
+    expect(controller.needsReload, false);
+    source.requestFailure = null;
+    expect(await controller.save(), true);
+    expect(source.additions, 1);
+    controller.dispose();
   });
   test(
       'submitted retry verifies missing ownership without publishing another copy',
@@ -440,7 +480,12 @@ void main() {
     await tester.tap(find.byTooltip('Apri o chiudi carte scansionate'));
     await tester.pumpAndSettle();
     expect(controller.cameraPaused, true);
-    expect(find.text('Conferma 1 carta in collezione'), findsOneWidget);
+    expect(find.text('Copy to Clipboard'), findsOneWidget);
+    expect(
+        tester
+            .widget<OutlinedButton>(find.widgetWithText(OutlinedButton, 'Save'))
+            .onPressed,
+        isNull);
     expect(find.text('Risultati · scegli tra i primi 2'), findsOneWidget);
     expect(find.text('Prezzo PK'), findsOneWidget);
     expect(tester.takeException(), isNull);

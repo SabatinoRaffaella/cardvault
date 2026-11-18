@@ -3,13 +3,20 @@ import 'cache_directory_provider.dart';
 
 /// Lettura/scrittura del file JSON; le regole di scadenza restano nel cache layer.
 class CacheFileProvider {
-  CacheFileProvider({CacheDirectoryProvider? directories})
-      : _directories = directories ?? CacheDirectoryProvider();
+  CacheFileProvider(
+      {CacheDirectoryProvider? directories,
+      this.fileName = 'marketplace-home-v1.json'})
+      : assert(!fileName.contains('/') && !fileName.contains('\\')),
+        _directories = directories ?? CacheDirectoryProvider();
   final CacheDirectoryProvider _directories;
+  final String fileName;
 
   Future<File> _file() async {
     final directory = await _directories.directory('metadata');
-    return File('${directory.path}/marketplace-home-v1.json');
+    if (!RegExp(r'^[a-z0-9-]+\.json$').hasMatch(fileName)) {
+      throw ArgumentError.value(fileName);
+    }
+    return File('${directory.path}/$fileName');
   }
 
   Future<String?> read() async {

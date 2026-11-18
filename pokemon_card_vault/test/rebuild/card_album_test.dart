@@ -193,12 +193,14 @@ void main() {
     final second = tester.getRect(albumCard('2'));
     final third = tester.getRect(albumCard('3'));
     final album = tester.getRect(find.byType(PageView));
-    expect(album.left, 8);
-    expect(album.right, 352);
-    expect(album.height, greaterThan(420));
-    expect(first.width, greaterThanOrEqualTo(166));
-    expect(first.height, greaterThanOrEqualTo(136));
-    expect(second.left - first.right, closeTo(2, .001));
+    expect(album.left, 2);
+    expect(album.right, 358);
+    expect(album.height, greaterThan(360));
+    expect(album.height, lessThan(390));
+    expect(first.width, greaterThanOrEqualTo(175));
+    expect(first.height,
+        closeTo((first.width - 2) / (.90 * .716 / .34) + 26, .001));
+    expect(second.left - first.right, closeTo(1, .001));
     expect(third.top - first.bottom, closeTo(1, .001));
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());

@@ -18,6 +18,73 @@ active listings of the same print and selected owned language, it shows the lowe
 available asking price with `Da`; missing prices remain explicitly unavailable.
 Quantity and language controls in Portfolio use active listed stock only.
 
+Portfolio entry performance: owner listing completion now has its own status,
+independent of Held reconciliation. The grid becomes ready (including an empty
+inventory) once the validated owner listing pages finish; a Held failure leaves
+Cardex unavailable but does not discard proven listings in Portfolio. Session
+changes, listing errors and explicit refresh still clear private listing state.
+While localized metadata resolves, Portfolio shows the supplied preview with an
+explicit Catalogo indication, then replaces it with the requested scan when
+available. Cardex retains its selected-language placeholder. Both visible
+Portfolio images and their metadata now pass through the existing viewport gate;
+offscreen sliver cache children no longer start artwork requests. Derived listing
+collections, ownership and prices are reused for the current immutable snapshot
+and language; chart notifications rebuild only the open drawer.
+
+Visible-card reopening cache: existing decoded images and metadata remain in
+memory during the app session. A v2 disk preview now retains the first 24 cards
+of each screen's last complete live snapshot, in exactly that snapshot's order,
+for the last account, expiring after seven days and restored
+only after the matching authenticated UID arrives. Images already downloaded
+reuse the shared disk image cache (now capped at 240 files); up to 200 public
+language manifests are also retained for seven days, avoiding repeated per-card
+metadata GETs on normal restarts. No whole-album image prefetch is introduced.
+Only artwork/public captions are saved for the private preview: no quantities,
+asking prices, owned language/variant attributes or listing/holding IDs. Cached
+cards show an explicit saved-preview message with ownership/sale state unknown,
+pending prices and disabled listing actions. Owner API reads run immediately in
+parallel and replace previews, including empty results. Complete reads replace
+each cached prefix, removing obsolete entries. Scrolling/widget rebuilds no
+longer write or reorder previews, and Cardex/Portfolio prefixes are not merged.
+The previous v1 recency cache is ignored to prevent restoring arbitrary later
+pages on upgrade. While Held is pending, Cardex retains its saved opening prefix;
+Portfolio can already use complete live listing data independently. Portfolio
+tiles are keyed/remapped by canonical card ID to keep image state attached to
+the same print across updates. Actual server membership/order changes still
+produce legitimate updates. Confirmed switches/scanner saves invalidate previews.
+Storage errors do not fail the view. No tests/harnesses were created, copied or
+run for this cache change; validation is source analysis and the phone APK build,
+with actual startup/tab timing still requiring a connected device.
+The ordered-cache fix passes source analysis. Its profile ARM64 APK was rebuilt
+and promoted with ABI/SHA256 verification:
+`5EF2A2AEAD2894D8CE0B0C3B08D967DA6316D8858540E8F1FE7990957DF7C00E`.
+The reported one-frame replacement still requires a phone check; no test suites
+or visual harnesses were created, copied or run for this fix.
+
+Deferred owner preload: after the first visible marketplace frame, the controller
+waits one second and starts the shared private collection read for an authenticated
+UID. Portfolio/Cardex reuse that controller and stream; opening either tab earlier
+starts immediately and cancels the delayed callback. Session changes/disposal
+cancel pending delay and existing owner-generation guards discard old responses.
+Guests do not prefetch. This anticipates the normal owner listings plus Held read,
+with the existing 1000-row page cap, rather than introducing a separate small-page
+snapshot: the previous limit=2 preview/full-page mismatch remains unsupported.
+It does not load the public expansion catalog, history or artwork until requested
+by the relevant screen/visible cards, and adds no polling or automatic retry loop.
+Source analysis reports no errors (two existing const suggestions in the main
+screen); no tests/harnesses were created, copied or run for the preload change.
+The profile ARM64 APK was rebuilt and ABI/SHA256 verified:
+`7E50DD888E91A5BE3B4F3F38EBEBE1476FDFBB6FC6E3BEE4BDA781F1B5D1501B`.
+
+Diagnosis was by source inspection: listing reads originally began on first tab entry,
+followed previously by up to two per-card metadata GETs at a time before images
+could appear. No Android device was connected for a signed-in timing capture;
+these changes remove client waits but do not establish API or phone latency.
+No tests or harnesses were created, copied or run for this performance fix.
+Changed Dart files pass analysis. The profile ARM64 APK was rebuilt and promoted
+with ABI/hash verification, SHA256
+`88706E33BAF1E0906D0246D3C101F3BCBAFE503C017256EB3E84A7506EDF74A2`.
+
 A small fixed tab on the right edge opens/closes a side drawer without losing
 the grid's scroll position. It can also close through the header, backdrop,
 Android Back or Escape. History loads only on first opening and explicit retry/
@@ -67,6 +134,17 @@ another on each cycle, and requires a valid saved ship-from country for a new
 listing. Condition, language and variant attributes are preserved. Only Pokoin
 publication is requested; no CardTrader publication target is added.
 
+Historical listing resolution: MyPokoin's List command POSTs a new row and Hold
+sets the previous one inactive, so several inactive rows can legitimately share
+one holding ID. The mobile switch no longer rejects that history as multiple
+live listings. It checks language, condition, finish, grading/variant and quantity;
+reuses the holding's explicit listingId when compatible, otherwise the latest
+compatible inactive/paused row. A unique compatible active row is reused rather
+than duplicated; conflicting live links still fail before writing. Historical
+rows for other languages/variants are not reactivated. Readback uses the same
+resolution, so inactive history cannot turn a successful switch into an uncertain
+result. No real account rows were changed to diagnose this issue.
+
 For a listing backed by a separate holding, returning to Collection uses inactive
 and exposes the retained holding again. For standalone native stock without a
 holding record, it uses paused so the card stays owned without inventing a
@@ -84,14 +162,17 @@ as part of publication.
 
 At the user's request, only collection_listing_switch_test.dart ran in the
 existing tests/cardex/rebuild-cardex-check-20261015 harness, with the thirteen
-required source/test files synchronized. Seven focused cases cover the dialog's
+required source/test files synchronized. Thirteen focused cases cover the dialog's
 successful switch, rejected switch, linked/native round trips without duplicate
 stock, an uncertain committed response verified without another POST, mismatched
-persisted price, and missing ownership/invalid price. HTTP requests are mocked;
+persisted price, missing ownership/invalid price, inactive EN history alongside
+an independently listed IT copy, explicit legacy links, stale held snapshots,
+conflicting live listings, language/finish isolation and read-only recovery after
+a lost reactivation response. HTTP requests are mocked;
 no real account listing was changed. No unrelated suites or visual QA harnesses
 were created or run. Source/test analysis is clean. The current ARM64 profile APK
 was rebuilt and verified through the standard helper, SHA256:
-`E8F43B3FFC49A44EF8B80F781107D9CDC6D58101943327AAA91B902C929E0C1B`.
+`CE7DCB073716960580196011664018D39A823BDA800C58924EABD93574E5D8EA`.
 
 Cardex uses an animated, horizontally swiped album with six thumbnails per
 leaf (2 × 3 on phones/leaves narrower than 420px and with large text;

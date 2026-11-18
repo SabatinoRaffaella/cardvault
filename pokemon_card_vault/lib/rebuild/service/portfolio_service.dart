@@ -9,7 +9,13 @@ class PortfolioService {
   final PortfolioHistoryProvider _provider;
 
   static CardCollection listedCollection(CardCollection collection) =>
-      CardCollection(status: collection.status, items: collection.listedItems);
+      CardCollection(
+          status: collection.listingsStatus,
+          ownerId: collection.ownerId,
+          fromCache: collection.fromCache &&
+              collection.listingsStatus == CollectionStatus.loading,
+          cachedCards: collection.cachedListedCards,
+          items: collection.listedItems);
 
   static double? priceFor(CardCollection collection, String cardId,
       {String? language}) {

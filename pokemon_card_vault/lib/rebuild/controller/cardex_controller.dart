@@ -85,21 +85,59 @@ class CardexController extends ChangeNotifier {
       _ownership.describe(collection, cardId,
           selectedLanguage: artworkLanguageFor(cardId));
 
-  CardCollection get portfolioCollection =>
-      PortfolioService.listedCollection(collection);
+  CardCollection? _portfolioSource, _portfolioCollection;
+  final _portfolioOwnership = <(String, String), CardOwnership>{};
+  final _portfolioPrices = <(String, String?), double?>{};
 
-  CardOwnership portfolioOwnershipFor(String cardId) =>
-      _ownership.describe(portfolioCollection, cardId,
-          selectedLanguage: artworkLanguageFor(cardId));
+  CardCollection get portfolioCollection {
+    if (!identical(_portfolioSource, collection)) {
+      _portfolioSource = collection;
+      _portfolioCollection = PortfolioService.listedCollection(collection);
+      _portfolioOwnership.clear();
+      _portfolioPrices.clear();
+    }
+    return _portfolioCollection!;
+  }
 
-  double? portfolioPriceFor(String cardId) =>
-      PortfolioService.priceFor(collection, cardId,
-          language: portfolioOwnershipFor(cardId).selectedLanguage);
+  CardOwnership portfolioOwnershipFor(String cardId) {
+    final listed = portfolioCollection;
+    final language = artworkLanguageFor(cardId);
+    return _portfolioOwnership.putIfAbsent((cardId, language),
+        () => _ownership.describe(listed, cardId, selectedLanguage: language));
+  }
 
-  void selectOwnedLanguage(String cardId, String language) {
-    if (_disposed || !ownershipKnown) return;
+  double? portfolioPriceFor(String cardId) {
+    final language = portfolioOwnershipFor(cardId).selectedLanguage;
+    final key = (cardId, language);
+    return _portfolioPrices.putIfAbsent(
+        key,
+        () =>
+            PortfolioService.priceFor(collection, cardId, language: language));
+  }
+
+  void _clearPortfolio() {
+    _portfolioSource = _portfolioCollection = null;
+    _portfolioOwnership.clear();
+    _portfolioPrices.clear();
+  }
+
+  void selectOwnedLanguage(String cardId, String language) =>
+      _selectOwnedLanguage(cardId, language);
+
+  void selectListedLanguage(String cardId, String language) =>
+      _selectOwnedLanguage(cardId, language, listedOnly: true);
+
+  void _selectOwnedLanguage(String cardId, String language,
+      {bool listedOnly = false}) {
+    if (_disposed ||
+        (listedOnly
+            ? portfolioCollection.status != CollectionStatus.ready
+            : !ownershipKnown)) {
+      return;
+    }
     final code = _ownership.normalizeLanguage(language);
-    final view = ownershipFor(cardId);
+    final view =
+        listedOnly ? portfolioOwnershipFor(cardId) : ownershipFor(cardId);
     if (!view.languages.any((option) => option.code == code && option.owned) ||
         _selectedLanguages[cardId] == code) {
       return;
@@ -147,15 +185,18 @@ class CardexController extends ChangeNotifier {
     }
   }
 
-  void retryCollection() {
+  void retryCollection({bool invalidatePreview = false}) {
     if (_disposed) return;
+    if (invalidatePreview) _collection.invalidatePreview();
     unawaited(_subscription?.cancel());
     collection = CardCollection(status: CollectionStatus.loading);
+    _clearPortfolio();
     _selectedLanguages.clear();
     _notify();
     _subscription = _collection.watch().listen((value) {
       if (_disposed) return;
       collection = value;
+      _clearPortfolio();
       if (!ownershipKnown) {
         filter = CardexFilter.all;
         _selectedLanguages.clear();
@@ -164,6 +205,7 @@ class CardexController extends ChangeNotifier {
     }, onError: (Object error, StackTrace stack) {
       if (_disposed) return;
       collection = CardCollection(status: CollectionStatus.unavailable);
+      _clearPortfolio();
       _selectedLanguages.clear();
       _notify();
     });
@@ -273,6 +315,7 @@ class CardexController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _clearPortfolio();
     artwork.removeListener(_artworkPreferenceChanged);
     artwork.dispose();
     unawaited(_subscription?.cancel());

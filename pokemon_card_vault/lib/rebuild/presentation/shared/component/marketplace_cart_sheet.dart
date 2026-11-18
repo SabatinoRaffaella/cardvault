@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../controller/cart_controller.dart';
+import '../../checkout/checkout_screen.dart';
 import '../price_format.dart';
 import '../atomics/marketplace_thumbnail.dart';
 
@@ -9,20 +10,33 @@ import '../atomics/marketplace_thumbnail.dart';
 Future<void> showMarketplaceCartSheet({
   required BuildContext context,
   required CartController controller,
-}) {
+  ValueChanged<int>? onDestinationSelected,
+  int navigationIndex = 0,
+}) async {
   unawaited(controller.refresh());
-  return showModalBottomSheet<void>(
+  final checkout = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (_) => MarketplaceCartSheet(controller: controller),
+    builder: (sheetContext) => MarketplaceCartSheet(
+        controller: controller,
+        onCheckout: () => Navigator.of(sheetContext).pop(true)),
   );
+  if (checkout == true && context.mounted) {
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => CheckoutScreen(
+            cart: controller,
+            navigationIndex: navigationIndex,
+            onDestinationSelected: onDestinationSelected)));
+  }
 }
 
 class MarketplaceCartSheet extends StatelessWidget {
-  const MarketplaceCartSheet({super.key, required this.controller});
+  const MarketplaceCartSheet(
+      {super.key, required this.controller, this.onCheckout});
 
   final CartController controller;
+  final VoidCallback? onCheckout;
 
   String _price(double value) =>
       '${value.toStringAsFixed(2).replaceAll('.', ',')} €';
@@ -135,6 +149,19 @@ class MarketplaceCartSheet extends StatelessWidget {
                           ])),
                 if (listings.isNotEmpty) ...[
                   const Divider(),
+                  FilledButton.icon(
+                      onPressed: !controller.canEdit
+                          ? null
+                          : onCheckout ??
+                              () {
+                                Navigator.of(context).push(
+                                    MaterialPageRoute<void>(
+                                        builder: (_) =>
+                                            CheckoutScreen(cart: controller)));
+                              },
+                      icon: const Icon(Icons.shopping_cart_checkout),
+                      label: const Text('Checkout')),
+                  const SizedBox(height: 12),
                   Text('Totale carte: ${pknPrice(controller.totalPkn)}',
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),

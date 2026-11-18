@@ -1,5 +1,6 @@
 import '../model/cardex.dart';
 import '../model/collection_listing.dart';
+import '../model/inventory_listing.dart';
 import '../provider/collection_listing_provider.dart';
 import 'card_ownership_service.dart';
 
@@ -31,18 +32,101 @@ class CollectionListingService {
   String _heldStatus(CollectionListingTarget target) =>
       target.hasHolding ? 'inactive' : 'paused';
 
+  bool _sameVariant(OwnedCard holding, Map<String, dynamic> row) {
+    final listing = InventoryListing.fromJson(row).item;
+    const ownership = CardOwnershipService();
+    String text(Object? value) => '${value ?? ''}'.trim().toUpperCase();
+    if (listing.isNft ||
+        listing.card.id != holding.card.id ||
+        ownership.normalizeLanguage(listing.language) !=
+            ownership.normalizeLanguage(holding.language) ||
+        text(listing.attributes['condition'] ?? 'NM') !=
+            text(holding.attributes['condition'] ?? 'NM') ||
+        listing.holo != holding.holo ||
+        listing.reverse != holding.reverse) {
+      return false;
+    }
+    for (final key in const [
+      'signed',
+      'firstEdition',
+      'sealed',
+      'graded',
+      'altered'
+    ]) {
+      if ((listing.attributes[key] == true) !=
+          (holding.attributes[key] == true)) {
+        return false;
+      }
+    }
+    for (final key in const [
+      'variantState',
+      'gradingCompany',
+      'grade',
+      'certificationId'
+    ]) {
+      if (text(listing.attributes[key]) != text(holding.attributes[key])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Map<String, dynamic>? _linkedListing(
+      OwnedCard holding, List<Map<String, dynamic>> rows) {
+    final linked = rows.where((row) =>
+        row['sourceListingId'] == holding.id ||
+        (holding.listingId.isNotEmpty && row['id'] == holding.listingId));
+    int quantity(Map<String, dynamic> row) =>
+        int.tryParse('${row['quantityAvailable']}') ?? 0;
+    // Repeated List/Hold cycles on MyPokoin can leave multiple inactive rows.
+    // Only live stock can conflict; never choose between two live listings.
+    final active = linked
+        .where((row) => row['status'] == 'active' && quantity(row) > 0)
+        .toList();
+    if (active.isNotEmpty) {
+      if (active.length != 1 ||
+          !_sameVariant(holding, active.single) ||
+          quantity(active.single) != holding.quantity) {
+        throw const CollectionSwitchFailure(
+            'I listing attivi collegati non identificano una sola copia della stessa lingua e variante. Verifica su MyPokoin.');
+      }
+      return active.single;
+    }
+    final reusable = linked
+        .where((row) =>
+            const ['paused', 'inactive'].contains(row['status']) &&
+            quantity(row) == holding.quantity &&
+            _sameVariant(holding, row))
+        .toList();
+    if (reusable.isEmpty) return null;
+    final explicit =
+        reusable.where((row) => row['id'] == holding.listingId).firstOrNull;
+    if (explicit != null) return explicit;
+    DateTime date(Map<String, dynamic> row, String key) =>
+        DateTime.tryParse('${row[key]}') ??
+        DateTime.fromMillisecondsSinceEpoch(0);
+    reusable.sort((a, b) {
+      final updated = date(b, 'updatedAt').compareTo(date(a, 'updatedAt'));
+      if (updated != 0) return updated;
+      final created = date(b, 'createdAt').compareTo(date(a, 'createdAt'));
+      return created != 0 ? created : '${a['id']}'.compareTo('${b['id']}');
+    });
+    return reusable.first;
+  }
+
   Future<bool> verify(String uid, CollectionListingTarget target,
       CollectionDisposition desired, double? price) async {
     final item = target.item;
     final rows = await _provider.listings(uid, item.card.id,
         id: item.fromListing ? item.id : null);
-    final matches = rows
-        .where((row) => item.fromListing
-            ? row['id'] == item.id
-            : row['sourceListingId'] == item.id)
-        .toList();
-    if (matches.length != 1) return false;
-    final row = matches.single;
+    final row = item.fromListing
+        ? rows.where((row) => row['id'] == item.id).singleOrNull
+        : _linkedListing(item, rows);
+    if (row == null ||
+        !_sameVariant(item, row) ||
+        int.tryParse('${row['quantityAvailable']}') != item.quantity) {
+      return false;
+    }
     if (desired == CollectionDisposition.collection) {
       return row['status'] == _heldStatus(target);
     }
@@ -78,6 +162,7 @@ class CollectionListingService {
             await _provider.listings(uid, item.card.id, id: item.id);
         if (current.length != 1 ||
             current.single['id'] != item.id ||
+            !_sameVariant(item, current.single) ||
             !const ['active', 'paused'].contains(current.single['status']) ||
             (int.tryParse('${current.single['quantityAvailable']}') ?? 0) <=
                 0) {
@@ -101,20 +186,9 @@ class CollectionListingService {
           throw const CollectionSwitchFailure(
               'La copia è cambiata. Aggiorna la collezione.');
         }
-        final existing = (await _provider.listings(uid, item.card.id))
-            .where((row) => row['sourceListingId'] == item.id)
-            .toList();
-        if (existing.length > 1) {
-          throw const CollectionSwitchFailure(
-              'Più listing collegati: verifica la copia su MyPokoin.');
-        }
-        if (existing.isNotEmpty) {
-          final row = existing.single;
-          if (!const ['paused', 'inactive'].contains(row['status']) ||
-              int.tryParse('${row['quantityAvailable']}') != holding.quantity) {
-            throw const CollectionSwitchFailure(
-                'Il listing collegato non è riattivabile.');
-          }
+        final row = _linkedListing(
+            holding, await _provider.listings(uid, item.card.id));
+        if (row != null) {
           wrote = true;
           await _provider.update(uid, '${row['id']}', {
             'status': 'active',

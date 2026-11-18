@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../model/card.dart';
+import '../model/account.dart';
 import '../model/demo_catalog.dart';
 import '../model/marketplace_home.dart';
 import '../model/cardex.dart';
@@ -91,6 +93,29 @@ class MarketplaceController extends ChangeNotifier {
   String _searchQuery = '';
   String? _expansion;
   int _selectedTab = 0;
+  StreamSubscription<String?>? _collectionPrefetch;
+  Timer? _collectionPrefetchDelay;
+
+  /// Called after the app's first visible frame. The normal owner read is
+  /// shared by both tabs; no second preview endpoint/pagination path is mixed in.
+  void startCollectionPrefetch() {
+    if (_disposed || _collectionPrefetch != null) return;
+    _collectionPrefetch = account.watchUserId().listen((uid) {
+      _collectionPrefetchDelay?.cancel();
+      if (uid == null || uid.isEmpty) return;
+      _collectionPrefetchDelay = Timer(const Duration(seconds: 1), () {
+        _collectionPrefetchDelay = null;
+        if (_disposed ||
+            account.session.status != AccountStatus.authenticated ||
+            account.session.user?.id != uid) {
+          return;
+        }
+        cardex.start(loadCatalog: false);
+      });
+    }, onError: (Object _) {
+      _collectionPrefetchDelay?.cancel();
+    });
+  }
 
   String get searchQuery => _searchQuery;
   String? get selectedExpansion => _expansion;
@@ -125,7 +150,10 @@ class MarketplaceController extends ChangeNotifier {
     RangeError.checkValidIndex(tab, const [0, 1, 2, 3, 4]);
     if (_selectedTab == tab) return;
     _selectedTab = tab;
-    if (tab == 2 || tab == 3) cardex.start(loadCatalog: tab == 3);
+    if (tab == 2 || tab == 3) {
+      _collectionPrefetchDelay?.cancel();
+      cardex.start(loadCatalog: tab == 3);
+    }
     if (tab == 2) portfolio.start();
     if (tab == 3) collectionListing.start();
     if (tab == 4) profile.start();
@@ -192,6 +220,8 @@ class MarketplaceController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _collectionPrefetchDelay?.cancel();
+    unawaited(_collectionPrefetch?.cancel());
     portfolio.dispose();
     collectionListing.dispose();
     scanner.dispose();

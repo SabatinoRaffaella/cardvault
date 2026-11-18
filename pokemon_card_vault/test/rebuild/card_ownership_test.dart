@@ -210,8 +210,10 @@ void main() {
       expect(find.byType(CollectionQuantityBadge), findsOneWidget);
       expect(find.text('×3'), findsOneWidget);
       expect(find.text('Posseduta · ×3'), findsNothing);
-      expect(tester.getRect(find.byType(CardLanguageSelector)).bottom,
-          lessThan(tester.getRect(find.byType(CollectionQuantityBadge)).top));
+      expect(
+          tester.getRect(find.byType(CollectionQuantityBadge)).right,
+          lessThanOrEqualTo(
+              tester.getRect(find.byType(CardLanguageSelector)).left));
       if (scenario.width == 390) {
         final grid = tester.widget<GridView>(find.byType(GridView).first);
         expect(
@@ -325,7 +327,14 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(option('EN'));
     await tester.pumpAndSettle();
-    expect(collection.ownershipFor('24').selectedLanguage, 'EN');
+    expect(collection.ownershipFor('24').selectedLanguage, 'IT');
+    expect(collection.artwork.language, 'IT');
+    expect(
+        tester
+            .widget<CardLanguageSelector>(find.byType(CardLanguageSelector))
+            .ownership
+            .selectedLanguage,
+        'EN');
     expect(find.text('×3'), findsOneWidget);
     expect(requests, 2);
     expect(tester.takeException(), isNull);

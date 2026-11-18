@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../cache/collection_preview_cache.dart';
 import '../model/cardex.dart';
 import '../provider/collection_provider.dart';
 import '../provider/inventory_provider.dart';
@@ -8,12 +9,22 @@ import 'inventory_reconciliation_service.dart';
 /// Coordina sessione e collezione senza dipendere da Riverpod o widget legacy.
 class CollectionService {
   CollectionService(
-      {CollectionProvider? provider, InventoryProvider? inventory})
+      {CollectionProvider? provider,
+      InventoryProvider? inventory,
+      CollectionPreviewCache? previews})
       : _provider = provider ?? CollectionProvider(),
         _inventory =
-            inventory ?? (provider == null ? InventoryProvider() : null);
+            inventory ?? (provider == null ? InventoryProvider() : null),
+        _previews = previews ?? CollectionPreviewCache();
+  final CollectionPreviewCache _previews;
+  bool _skipPreviewOnce = false;
   final CollectionProvider _provider;
   final InventoryProvider? _inventory;
+
+  void invalidatePreview() {
+    _skipPreviewOnce = true;
+    _previews.invalidate();
+  }
 
   Stream<CardCollection> watch() {
     late StreamController<CardCollection> output;
@@ -30,11 +41,13 @@ class CollectionService {
         emit(CardCollection(status: CollectionStatus.unavailable));
     Future<void> changeUser(String? uid) async {
       final request = ++version;
+      _previews.activate(uid);
       final previous = items;
       items = null;
       unawaited(inventory?.cancel());
       inventory = null;
       emit(CardCollection(
+          ownerId: uid ?? '',
           status:
               uid == null ? CollectionStatus.guest : CollectionStatus.loading));
       await previous?.cancel();
@@ -42,45 +55,83 @@ class CollectionService {
       List<OwnedCard>? holdings;
       List<InventoryListing>? listings = _inventory == null ? const [] : null;
       var inventoryComplete = _inventory == null;
-      var failed = false;
-      void fail() {
-        if (request != version || cancelled) return;
-        failed = true;
-        unawaited(inventory?.cancel());
-        unavailable();
-      }
+      var holdingsFailed = false, listingsFailed = false;
+      CardCollection? savedPreview;
 
       void publish() {
-        if (request != version || cancelled || failed || listings == null) {
-          return;
+        if (request != version || cancelled) return;
+        if (listings == null && !holdingsFailed && !listingsFailed) return;
+        final listedItems = listingsFailed
+            ? const <OwnedCard>[]
+            : (listings ?? const <InventoryListing>[])
+                .where((row) => row.isListed)
+                .map((row) => row.item)
+                .toList();
+        final listingsStatus = listingsFailed
+            ? CollectionStatus.unavailable
+            : inventoryComplete
+                ? CollectionStatus.ready
+                : CollectionStatus.loading;
+        if (listingsStatus == CollectionStatus.ready) {
+          _previews.synchronize(uid,
+              portfolio: CardCollection(
+                      status: CollectionStatus.ready, items: listedItems)
+                  .cards);
         }
-        if (inventoryComplete && holdings != null) {
+        if (holdingsFailed || listingsFailed) {
+          // Cardex needs both sources; Portfolio needs only validated listings.
           emit(CardCollection(
+              ownerId: uid,
+              status: CollectionStatus.unavailable,
+              listingsStatus: listingsStatus,
+              listedItems: listedItems));
+        } else if (inventoryComplete && holdings != null) {
+          final owned = const InventoryReconciliationService()
+              .reconcile(holdings!, listings!);
+          final complete = CardCollection(
+              ownerId: uid,
               status: CollectionStatus.ready,
+              listingsStatus: listingsStatus,
               holdings: holdings!,
-              listedItems: listings!
-                  .where((row) => row.isListed)
-                  .map((row) => row.item)
-                  .toList(),
-              items: const InventoryReconciliationService()
-                  .reconcile(holdings!, listings!)));
+              listedItems: listedItems,
+              items: owned);
+          _previews.synchronize(uid, cardex: complete.cards);
+          emit(complete);
         } else {
           // Show proven listed cards early, never unmatched mirrored holdings.
           // Quantities/absence stay unknown until both complete sources reconcile.
-          final preview = listings!
+          final preview = (listings ?? const <InventoryListing>[])
               .where((row) => row.isOwned)
               .map((row) => row.item)
               .toList();
-          if (preview.isNotEmpty) {
-            emit(CardCollection(
-                status: CollectionStatus.loading,
-                items: preview,
-                listedItems: listings!
-                    .where((row) => row.isListed)
-                    .map((row) => row.item)
-                    .toList()));
-          }
+          emit(CardCollection(
+              ownerId: uid,
+              status: CollectionStatus.loading,
+              // Keep the opening Cardex snapshot until Held reconciliation is
+              // complete, rather than briefly replacing it with only listings.
+              fromCache: savedPreview?.cachedCards.isNotEmpty == true,
+              cachedCards: savedPreview?.cachedCards ?? const [],
+              cachedListedCards: savedPreview?.cachedListedCards ?? const [],
+              listingsStatus: listingsStatus,
+              items: preview,
+              listedItems: listedItems));
         }
+      }
+
+      final skipPreview = _skipPreviewOnce;
+      _skipPreviewOnce = false;
+      if (_inventory != null && !skipPreview) {
+        unawaited(_previews.read(uid).then((preview) {
+          if (!cancelled &&
+              request == version &&
+              listings == null &&
+              !holdingsFailed &&
+              !listingsFailed &&
+              preview != null) {
+            savedPreview = preview;
+            emit(preview);
+          }
+        }).catchError((Object _) {}));
       }
 
       if (_inventory != null) {
@@ -89,14 +140,16 @@ class CollectionService {
           inventoryComplete = page.complete;
           publish();
         }, onError: (Object error, StackTrace stack) {
-          fail();
+          listingsFailed = true;
+          publish();
         });
       }
       items = _provider.watchItems(uid).listen((rows) {
         holdings = rows;
         publish();
       }, onError: (Object error, StackTrace stack) {
-        fail();
+        holdingsFailed = true;
+        publish();
       });
     }
 
@@ -120,6 +173,7 @@ class CollectionService {
       await session?.cancel();
       await items?.cancel();
       await inventory?.cancel();
+      _previews.flush();
     });
     return output.stream;
   }

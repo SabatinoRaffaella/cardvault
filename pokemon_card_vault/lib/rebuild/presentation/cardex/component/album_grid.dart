@@ -30,8 +30,11 @@ class AlbumGrid extends StatelessWidget {
         final columns = constraints.crossAxisExtent >= 700 ? 4 : 2;
         final width =
             (constraints.crossAxisExtent - (columns - 1) * 12) / columns;
+        final indices = {for (var i = 0; i < cards.length; i++) cards[i].id: i};
         return SliverGrid.builder(
             itemCount: cards.length,
+            findChildIndexCallback: (key) =>
+                key is ValueKey<String> ? indices[key.value] : null,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: columns,
                 crossAxisSpacing: 12,
@@ -44,9 +47,12 @@ class AlbumGrid extends StatelessWidget {
             itemBuilder: (context, index) {
               final card = cards[index];
               return DecoratedBox(
+                  key: ValueKey(card.id),
                   decoration: const BoxDecoration(color: CardexStyle.seam),
                   child: AlbumCard(
                       card: card,
+                      viewportPosition: Scrollable.maybeOf(context)?.position,
+                      previewWhileLoading: true,
                       priceLabel: priceLabelFor?.call(card),
                       quantity: collection.quantityFor(card.id),
                       ownership: ownershipFor?.call(card.id),

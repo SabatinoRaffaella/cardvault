@@ -10,10 +10,12 @@ class CollectionCardArtwork extends StatefulWidget {
       required this.language,
       required this.fallbackUrl,
       this.showCatalogBadge = true,
+      this.previewWhileLoading = false,
       required this.imageBuilder});
   final CollectionArtworkController controller;
   final String cardId, language, fallbackUrl;
   final bool showCatalogBadge;
+  final bool previewWhileLoading;
   final Widget Function(String url, VoidCallback? onError) imageBuilder;
   @override
   State<CollectionCardArtwork> createState() => _CollectionCardArtworkState();
@@ -59,15 +61,17 @@ class _CollectionCardArtworkState extends State<CollectionCardArtwork> {
     final english = widget.language == 'EN';
     final ready = controller.preferenceReady &&
         (english || controller.resolved(widget.cardId));
-    if (!ready) {
+    if (!ready && (!widget.previewWhileLoading || widget.fallbackUrl.isEmpty)) {
       return Center(
           child: Semantics(
               label: 'Caricamento immagine nella lingua scelta',
               child: const Icon(Icons.style_outlined, size: 40)));
     }
-    final localized = controller
-        .metadataFor(widget.cardId)
-        ?.languageImageUrls[widget.language];
+    final localized = ready
+        ? controller
+            .metadataFor(widget.cardId)
+            ?.languageImageUrls[widget.language]
+        : null;
     final failed = localized != null && _failedImages.contains(localized);
     final fallback = !english && (localized == null || failed);
     return Stack(fit: StackFit.expand, children: [
@@ -88,8 +92,9 @@ class _CollectionCardArtworkState extends State<CollectionCardArtwork> {
             left: 3,
             top: 3,
             child: Tooltip(
-                message:
-                    'Scansione ${widget.language} non disponibile; immagine del catalogo.',
+                message: ready
+                    ? 'Scansione ${widget.language} non disponibile; immagine del catalogo.'
+                    : 'Scansione ${widget.language} in caricamento; anteprima del catalogo.',
                 child: DecoratedBox(
                     decoration: BoxDecoration(
                         color: Colors.black87,

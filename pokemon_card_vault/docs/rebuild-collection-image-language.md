@@ -29,12 +29,18 @@ viewport gate still defers below-fold scans, and Portfolio retains its lazy
 sliver grid. At most two metadata requests run at once; identical card IDs
 share work, queued sleeves are removed when their last consumer disappears,
 and disposal ignores late completions. A bounded public metadata map is reused
-across Cardex/Portfolio and language changes. English uses catalogue previews
+across Cardex/Portfolio and language changes; successful manifests for at most
+200 seen cards now also survive normal restarts for seven days in the private
+app cache directory. Failed requests are never written to disk. English uses catalogue previews
 directly, without a new translation metadata request. No whole-collection
 image precache or new listing request is introduced.
 
-While metadata resolves, a placeholder is shown instead of briefly showing
-English as though it were the selected language. The chosen scan then uses the
+While metadata resolves, Cardex shows a placeholder instead of briefly showing
+English as though it were the selected language. Portfolio shows its supplied
+catalogue preview immediately with an explicit Catalogo badge/tooltip while the
+chosen scan loads; it no longer blocks visible cards on per-card metadata GETs.
+Portfolio also uses the outer viewport gate for cached offscreen grid children.
+The chosen scan then uses the
 existing image cache and capped decoding path. Missing mappings, metadata
 failure or failed translated images retain the catalogue image with a small
 explicit “Catalogo” indication. Failures are cached for this controller lifetime

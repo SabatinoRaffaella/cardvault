@@ -40,13 +40,19 @@ class CardDetails extends StatefulWidget {
       this.draftId,
       this.onOpenClipboard,
       this.onDraftLogin,
+      this.onCheckoutDestinationSelected,
+      this.checkoutNavigationIndex = 0,
       this.sellerName = 'Pokoin seller',
       required this.cart})
       : demoCard = null;
 
   /// Gli ID demo non sono carte del catalogo: nessuna richiesta HTTP.
   const CardDetails.demo(
-      {super.key, required DemoCard card, required this.cart})
+      {super.key,
+      required DemoCard card,
+      required this.cart,
+      this.onCheckoutDestinationSelected,
+      this.checkoutNavigationIndex = 0})
       : demoCard = card,
         preview = null,
         initialColor = null,
@@ -69,6 +75,8 @@ class CardDetails extends StatefulWidget {
   final String? draftId;
   final VoidCallback? onOpenClipboard, onDraftLogin;
   final String sellerName;
+  final ValueChanged<int>? onCheckoutDestinationSelected;
+  final int checkoutNavigationIndex;
   @override
   State<CardDetails> createState() => _CardDetailsState();
 }
@@ -217,7 +225,12 @@ class _CardDetailsState extends State<CardDetails> {
                         builder: (context, _) => IconButton(
                             tooltip: 'Apri carrello',
                             onPressed: () => showMarketplaceCartSheet(
-                                context: context, controller: widget.cart),
+                                context: context,
+                                controller: widget.cart,
+                                onDestinationSelected:
+                                    widget.onCheckoutDestinationSelected,
+                                navigationIndex:
+                                    widget.checkoutNavigationIndex),
                             icon: Badge(
                                 isLabelVisible: widget.cart.itemCount > 0,
                                 label: Text('${widget.cart.itemCount}'),

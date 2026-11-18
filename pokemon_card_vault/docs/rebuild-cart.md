@@ -27,6 +27,88 @@ CartController to the same AccountController used by the application gate.
 Calling `CartService()` without providers still creates an in-memory service,
 useful for isolated UI and existing demo tests. Injected services remain caller-owned.
 
+## Grouped Checkout review
+
+The cart's Checkout button closes its sheet before opening
+`presentation/checkout/checkout_screen.dart` with the same CartController.
+Marketplace and card-details entry points supply navigation callbacks so the
+shared utility bar returns to the chosen main tab. Demo EUR rows remain outside
+this review; only actual listing-backed PKN rows are grouped.
+
+`CheckoutService` builds an insertion-ordered map keyed by canonical card ID,
+condition, language and normalized, deduplicated/sorted variant attributes.
+Seller and price are excluded from that visual key. Each immutable group keeps
+the original ListingCartItems, including listing IDs, seller metadata, individual
+prices, quantities and preserved storage data; equal-price sellers are never
+merged into one offer. Group totals sum unit price times quantity for each offer.
+
+`CheckoutController` owns route-local selected quantities and the active listing
+ID for each group. Whole-group and per-offer selection support partial quantities;
+the selected total is distinct from the full cart/group total. Selection is not
+persisted as another cart. Cart updates reconcile quantities and remove stale
+selection/selector entries; removing an earlier offer does not retarget the
+selected seller through a shifting numeric index. Shared cart loading and account
+changes clear unavailable rows through the existing cart lifecycle. Disposing
+Checkout detaches its listener without disposing the shared cart.
+
+The Checkout overview presents separate overlapping 2.5D stacks per Pokemon
+name family. `CheckoutService.piles` adds an insertion-ordered parent map above
+the exact card/condition/language/variant groups: Espeon and Espeon EX can share
+the Espeon pile, while Flareon is a separate pile. The current card model has no
+species ID, so family names are derived conservatively from the stored display
+name by removing known trailing mechanics (EX/GX/V/VMAX/VSTAR etc.). Regional,
+owner and multi-Pokemon names remain distinct; no substring matching or extra
+catalog request is used. This is a presentation projection, not a change to the
+persisted card or listing identities.
+
+Checkout displays one family bundle at a time, with previous/next buttons and
+a hold-and-drag gesture: left advances, right returns to the previous bundle.
+Each pile retains its own active group and offer selection.
+Up to three group faces are drawn per visible pile, with at most five paper
+layers per group while numeric quantities remain exact. Each exact group's
+outline color is derived deterministically from its immutable key, not its list
+position: sorting, removing other groups, changing price or reopening Checkout
+does not recolor it. The same accent is used on its face, label and selected
+detail panel. Theme brightness adjusts color lightness for readability.
+Artwork uses the existing image cache without downloading every copy. Tapping
+a group or its label opens a central, scrollable dialog with a close button;
+the visible details button provides the same action. Pokemon from
+different name families are never inserted into the same visual stack.
+
+The dialog shows an accessible previous/next offer selector, seller/origin,
+country, unit price, cart quantity, selected-copy controls and exact offer/copy
+removal commands delegated to CartController. Holding the stack and dragging up
+removes exactly one copy of its active offer on release. The gesture locks its
+axis and requires an 80 logical-pixel movement after a long press; ordinary
+page scrolling and short drags do not remove copies. Buttons remain available.
+Annulla in the snackbar, app bar and dialog restores the last removed copy,
+including its listing identity, saved storage data and selected quantity delta.
+Undo is scoped to this Checkout route and cart session: account changes invalidate
+it. Restoring a removed row uses normal cart persistence without a catalog fetch.
+The layout adapts at narrow widths
+and larger text scales. Empty, loading and persistence-error states use the
+existing cart state. Styling lives in `style/checkout_style.dart` and inherits the
+active application theme.
+
+Validation for 1.2.1: 23 targeted Checkout/cart tests passed, covering grouping,
+offer selection, one-copy removal, Undo persistence/account isolation, directional
+hold gestures and 320/390 logical-pixel layouts at 200% text size. QA output lives
+in the app's `build/qa/checkout/`; the historical protected cart QA is unchanged.
+
+This is a review/selection screen, not a purchase submission. It creates no
+order or payment; shipping and final totals still need an authoritative backend
+quote per seller with current stock/prices. No extra network calls are added
+by grouping, selection or moving the offer selector.
+
+Validation: `test/rebuild/checkout_test.dart` covers seller identity at equal
+prices, variant normalization, cumulative prices, partial selection, stable IDs
+after removal, and cart-to-Checkout at 320/390 logical pixels with 2× text.
+Together with `cart_widget_test.dart`, eight targeted tests passed for the
+initial grouped Checkout implementation. The subsequent stack presentation was
+statically analyzed; tests were preserved and not rerun/expanded for this visual
+iteration, following the workspace's styling scope. The protected historical
+cart QA is not used or modified.
+
 ## Live offers and price-side cart actions, 2026-10-17
 
 Catalog search tiles and top sellers show the cart button immediately to the
@@ -149,7 +231,7 @@ retain their captured owner. Old remote operations never populate the new UI.
 The cart uses the chosen offer's saved price and stock snapshot, never the
 catalog's indicative price. Quantity additions respect that stock snapshot;
 the UI identifies availability as requiring verification before purchase.
-This change does not add checkout, shipping calculation, payment, inventory
+The grouped Checkout review does not add order submission, shipping calculation, payment, inventory
 reservation or fresh server validation of the final purchase amount.
 The existing `/api/marketplace-cart` endpoint is analytics only and is not used
 as a persistence API.

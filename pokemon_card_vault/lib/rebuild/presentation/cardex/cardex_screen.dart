@@ -50,6 +50,9 @@ class CardexScreen extends StatelessWidget {
                       CollectionNotice(
                           status: controller.collection.status,
                           onRetry: controller.retryCollection),
+                    if (controller.collection.fromCache)
+                      const Text(
+                          'Anteprime salvate · verifica della collezione in corso…'),
                     if (!controller.viewingCollection &&
                         controller.expansion == null)
                       const Text(

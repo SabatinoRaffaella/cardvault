@@ -49,6 +49,16 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     _controller.addListener(_syncSearch);
     _controller.account.addListener(_syncScannerUser);
     _syncScannerUser();
+    _scheduleCollectionPrefetch();
+  }
+
+  void _scheduleCollectionPrefetch() {
+    final controller = _controller;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && identical(controller, _controller)) {
+        controller.startCollectionPrefetch();
+      }
+    });
   }
 
   @override
@@ -61,6 +71,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       _controller.account.addListener(_syncScannerUser);
       _syncScannerUser();
       _syncSearch();
+      _scheduleCollectionPrefetch();
     }
   }
 
@@ -96,8 +107,18 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
   void _showDetail(DemoCard card) {
     Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (_) => CardDetails.demo(card: card, cart: _controller.cart),
+      builder: (_) => CardDetails.demo(
+          card: card,
+          cart: _controller.cart,
+          onCheckoutDestinationSelected: _navigateFromCheckout,
+          checkoutNavigationIndex: _controller.selectedTab),
     ));
+  }
+
+  void _navigateFromCheckout(int index) {
+    if (!mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    _controller.selectTab(index);
   }
 
   void _showExpansionPreview(MarketplaceExpansion expansion) {
@@ -161,6 +182,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               preview: card,
               controller: detailsController,
               cart: _controller.cart,
+              onCheckoutDestinationSelected: _navigateFromCheckout,
+              checkoutNavigationIndex: _controller.selectedTab,
               initialColor: cardColor,
               ownershipController: showOwnership ? _controller.cardex : null,
               clipboard: _controller.clipboard,
@@ -227,10 +250,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             if (constraints.maxWidth < 64) {
               return const PokoinBrandMark();
             }
-            return Row(children: [
-              const PokoinBrandMark(),
-              const SizedBox(width: 10),
-              const Flexible(
+            return const Row(children: [
+              PokoinBrandMark(),
+              SizedBox(width: 10),
+              Flexible(
                   child: Text('pokoin',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -251,6 +274,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   onPressed: () => showMarketplaceCartSheet(
                     context: context,
                     controller: _controller.cart,
+                    onDestinationSelected: _navigateFromCheckout,
+                    navigationIndex: _controller.selectedTab,
                   ),
                   icon: Badge(
                     isLabelVisible: cartCount > 0,
@@ -291,7 +316,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                       onOpenCard: _showScannedCard,
                       onLogin: _showLogin,
                       onSaved: () {
-                        _controller.cardex.retryCollection();
+                        _controller.cardex
+                            .retryCollection(invalidatePreview: true);
                       }),
                   2 => PortfolioScreen(
                       controller: _controller.cardex,

@@ -24,6 +24,7 @@ class AlbumCard extends StatelessWidget {
       this.viewportPosition,
       this.pageChanges,
       this.artworkOnly = false,
+      this.previewWhileLoading = false,
       this.priceLabel,
       this.collectionAction,
       required this.onOpen});
@@ -36,6 +37,7 @@ class AlbumCard extends StatelessWidget {
   final Listenable? pageChanges;
   // Portfolio keeps the complete card. Only the Cardex album opts into this.
   final bool artworkOnly;
+  final bool previewWhileLoading;
   final String? priceLabel;
   final Widget? collectionAction;
   final VoidCallback onOpen;
@@ -119,6 +121,7 @@ class AlbumCard extends StatelessWidget {
                               language: artworkScope.languageFor(card.id),
                               fallbackUrl: imageUrl,
                               showCatalogBadge: !artworkOnly,
+                              previewWhileLoading: previewWhileLoading,
                               imageBuilder: scan);
 
                       return CardOwnershipArtwork(

@@ -82,15 +82,30 @@ class OwnedCard {
 class CardCollection {
   CardCollection(
       {required this.status,
+      this.ownerId = '',
+      this.fromCache = false,
+      List<MarketplaceCardPreview> cachedCards = const [],
+      List<MarketplaceCardPreview> cachedListedCards = const [],
+      CollectionStatus? listingsStatus,
       List<OwnedCard> items = const [],
       List<OwnedCard> holdings = const [],
       List<OwnedCard> listedItems = const []})
-      : holdings = List.unmodifiable(holdings),
+      : listingsStatus = listingsStatus ?? status,
+        cachedCards = List.unmodifiable(cachedCards),
+        cachedListedCards = List.unmodifiable(cachedListedCards),
+        holdings = List.unmodifiable(holdings),
         items = List.unmodifiable(items
             .where((item) => item.quantity > 0 && item.card.id.isNotEmpty)),
         listedItems = List.unmodifiable(listedItems
             .where((item) => item.quantity > 0 && item.card.id.isNotEmpty));
   final CollectionStatus status;
+  final String ownerId;
+
+  /// Artwork-only saved preview; never evidence of current ownership/listings.
+  final bool fromCache;
+  final List<MarketplaceCardPreview> cachedCards, cachedListedCards;
+  // Owner listings are complete independently of Held reconciliation.
+  final CollectionStatus listingsStatus;
   final List<OwnedCard> items;
   final List<OwnedCard> holdings;
 
@@ -102,10 +117,12 @@ class CardCollection {
       .where((item) => item.card.id == id)
       .fold(0, (sum, item) => sum + item.quantity);
   bool owns(String id) => quantityFor(id) > 0;
-  int get copies => items.fold(0, (sum, item) => sum + item.quantity);
-  List<MarketplaceCardPreview> get cards => List.unmodifiable({
-        for (final item in items) item.card.id: item.card,
-      }.values);
+  late final int copies = items.fold(0, (sum, item) => sum + item.quantity);
+  late final List<MarketplaceCardPreview> cards = fromCache
+      ? cachedCards
+      : List.unmodifiable({
+          for (final item in items) item.card.id: item.card,
+        }.values);
 }
 
 class CardexPage {

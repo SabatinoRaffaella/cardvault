@@ -14,9 +14,9 @@ abstract final class WardrobeStyle {
       WardrobeSprite('assets/icons/wardrobe/base/poko.png', 16, 22, 47, 43);
   static const accessories = {
     'batty': WardrobeSprite(
-        'assets/icons/wardrobe/headgear/Batty.png', 17, 8, 44, 20),
+        'assets/icons/wardrobe/headgear/Batty.png', 15, 16, 44, 20),
     'skellyyyy': WardrobeSprite(
-        'assets/icons/wardrobe/headgear/Skellyyyy.png', 2, 0, 75, 45),
+        'assets/icons/wardrobe/headgear/Skellyyyy.png', 19, 11, 41, 26),
     'lumachina': WardrobeSprite(
         'assets/icons/wardrobe/hand/Lumachina.png', 47, 38, 31.5, 22.4),
     'boots': WardrobeSprite(

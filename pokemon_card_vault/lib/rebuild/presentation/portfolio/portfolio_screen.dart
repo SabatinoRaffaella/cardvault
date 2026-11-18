@@ -48,10 +48,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-      listenable: Listenable.merge([
-        controller,
-        if (widget.historyController != null) widget.historyController!
-      ]),
+      listenable: controller,
       builder: (context, _) {
         final collection = controller.portfolioCollection;
         final history = widget.historyController;
@@ -83,9 +80,10 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                                           onRetry: controller.retryCollection),
                                       if (collection.status ==
                                               CollectionStatus.loading &&
-                                          collection.items.isNotEmpty)
-                                        Text(
-                                            '${collection.cards.length} carte in vendita caricate · sincronizzazione in corso'),
+                                          collection.cards.isNotEmpty)
+                                        Text(collection.fromCache
+                                            ? '${collection.cards.length} anteprime salvate · verifica listing in corso'
+                                            : '${collection.cards.length} carte in vendita caricate · sincronizzazione in corso'),
                                       if (collection.status ==
                                           CollectionStatus.ready) ...[
                                         TextButton.icon(
@@ -113,6 +111,9 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                                     ownershipFor:
                                         controller.portfolioOwnershipFor,
                                     priceLabelFor: (card) {
+                                      if (collection.fromCache) {
+                                        return 'Aggiornamento prezzo…';
+                                      }
                                       final price =
                                           controller.portfolioPriceFor(card.id);
                                       return price == null
@@ -120,7 +121,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                                           : 'Da ${pknPrice(price)}';
                                     },
                                     onLanguageSelected:
-                                        controller.selectOwnedLanguage,
+                                        controller.selectListedLanguage,
                                     onOpen: widget.onOpen)),
                           ]),
                       if (history != null) ...[
@@ -154,9 +155,13 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                                               const BorderRadius.horizontal(
                                                   left: Radius.circular(20)),
                                           clipBehavior: Clip.antiAlias,
-                                          child: PortfolioHistoryDrawer(
-                                              controller: history,
-                                              onClose: _closeHistory))))),
+                                          child: ListenableBuilder(
+                                              listenable: history,
+                                              builder: (context, _) =>
+                                                  PortfolioHistoryDrawer(
+                                                      controller: history,
+                                                      onClose:
+                                                          _closeHistory)))))),
                         ],
                         Positioned(
                             right: _historyOpen

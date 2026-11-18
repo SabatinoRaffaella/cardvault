@@ -156,10 +156,16 @@ void main() {
             tester.getSize(find.byType(CardexArtworkWindow)).width /
                 (CardexArtworkConstants.width * CardexStyle.cardAspectRatio),
             .001));
+    expect(tester.getRect(find.byType(AlbumCardCaption)).top,
+        lessThan(tester.getRect(find.byType(CardexArtworkWindow)).bottom));
     expect(
-        tester.getRect(find.byType(AlbumCardCaption)).top,
-        greaterThanOrEqualTo(
-            tester.getRect(find.byType(CardexArtworkWindow)).bottom - .001));
+        tester.widget<AlbumCardCaption>(find.byType(AlbumCardCaption)).overlay,
+        isTrue);
+    expect(
+        find.descendant(
+            of: find.byType(AlbumCardCaption),
+            matching: find.byType(DecoratedBox)),
+        findsNothing);
     expect(CardexArtworkConstants.top, .12);
     expect(CardexArtworkConstants.height, .34);
     expect(find.text('×2'), findsOneWidget);

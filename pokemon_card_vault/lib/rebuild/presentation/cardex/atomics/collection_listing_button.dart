@@ -30,7 +30,7 @@ class CollectionListingButton extends StatelessWidget {
             language: cardex.ownershipFor(card.id).selectedLanguage,
             controller: actions));
     if (result == true) {
-      cardex.retryCollection();
+      cardex.retryCollection(invalidatePreview: true);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content:

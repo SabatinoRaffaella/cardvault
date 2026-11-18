@@ -237,6 +237,29 @@ class CartService extends ChangeNotifier {
     _changed(id, _listingItems[id]);
   }
 
+  /// Undo restores exactly one removed copy, including legacy metadata after
+  /// the last row was deleted. Existing rows retain their newer offer details.
+  bool restoreListingCopy(ListingCartItem removed) {
+    if (!canEdit || _disposed || removed.quantity <= 0) return false;
+    final id = removed.listing.id;
+    final existing = _listingItems[id];
+    if (id.isEmpty ||
+        removed.listing.cardId != removed.card.id ||
+        (existing != null && existing.card.id != removed.card.id)) {
+      return false;
+    }
+    if (existing == null && _listingItems.length >= 100) return false;
+    final basis = existing ?? removed;
+    final next = (existing?.quantity ?? 0) + 1;
+    final ceiling = removed.quantity > basis.listing.stock
+        ? removed.quantity
+        : basis.listing.stock;
+    if (next > ceiling) return false;
+    _listingItems[id] = basis.withQuantity(next);
+    _changed(id, _listingItems[id]);
+    return true;
+  }
+
   void removeListing(String id) {
     if (!canEdit || _disposed) return;
     if (_listingItems.remove(id) != null) _changed(id, null);

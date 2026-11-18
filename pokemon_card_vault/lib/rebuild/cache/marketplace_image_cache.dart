@@ -7,7 +7,7 @@ abstract final class MarketplaceImageCache {
   static const maxConcurrentDownloads = 2;
   static final instance = CacheManager(Config(key,
       stalePeriod: const Duration(days: 30),
-      maxNrOfCacheObjects: 80,
+      maxNrOfCacheObjects: 240,
       fileService: HttpFileService()
         ..concurrentFetches = maxConcurrentDownloads,
       fileSystem: ImageCacheFileSystem()));

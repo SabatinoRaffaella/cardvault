@@ -89,6 +89,7 @@ class CartController extends ChangeNotifier {
   }
 
   bool get isLoading => _service.isLoading;
+  int get sessionVersion => _sessionVersion;
   bool get isSaving => _service.isSaving;
   bool get isSyncing => _service.isSyncing;
   bool get canEdit => _service.canEdit;
@@ -128,6 +129,8 @@ class CartController extends ChangeNotifier {
       _service.addListing(card, listing);
   void decreaseListing(String id) => _service.decreaseListing(id);
   void removeListing(String id) => _service.removeListing(id);
+  bool restoreListingCopy(ListingCartItem item) =>
+      _service.restoreListingCopy(item);
 
   void addCard(DemoCard card) => _service.addCard(card);
   void removeCard(String cardId) => _service.removeCard(cardId);

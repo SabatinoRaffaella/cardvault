@@ -30,6 +30,7 @@ class _Backend {
   int writes = 0;
   Map<String, dynamic>? published;
   final rows = <Map<String, dynamic>>[];
+  Map<String, dynamic> holding = {..._holdingJson};
   late final client = MockClient((request) async {
     expect(request.url.host, 'api.pokoin.com');
     expect(request.headers['Authorization'], 'Bearer test-token');
@@ -40,7 +41,7 @@ class _Backend {
       if (request.url.path == '/api/marketplace-collection') {
         return json({
           'uid': 'owner',
-          'items': [_holdingJson]
+          'items': [holding]
         });
       }
       if (request.url.path == '/api/marketplace-seller-settings') {
@@ -74,6 +75,9 @@ class _Backend {
     final row = rows
         .singleWhere((row) => row['id'] == request.url.queryParameters['id']);
     row.addAll(body);
+    if (loseResponse) {
+      throw http.ClientException('Response lost after commit');
+    }
     return json(row);
   });
 
@@ -82,11 +86,28 @@ class _Backend {
           client: client, token: (_) async => 'test-token'));
 }
 
-CardCollection _collection() {
-  final holding = OwnedCard.fromJson(_holdingJson);
+CardCollection _collection([Map<String, dynamic> json = _holdingJson]) {
+  final holding = OwnedCard.fromJson(json);
   return CardCollection(
       status: CollectionStatus.ready, items: [holding], holdings: [holding]);
 }
+
+Map<String, dynamic> _linkedRow(String id,
+        {String status = 'inactive',
+        String language = 'EN',
+        String source = 'held-1',
+        String updated = '2026-11-09T10:00:00Z'}) =>
+    {
+      ..._holdingJson,
+      'id': id,
+      'sellerUid': 'owner',
+      'status': status,
+      'language': language,
+      'quantityAvailable': 2,
+      'pricePkn': 10.0,
+      'sourceListingId': source,
+      'updatedAt': updated,
+    };
 
 Future<CollectionListingController> _controller(_Backend backend) async {
   final controller = CollectionListingController(
@@ -179,6 +200,7 @@ void main() {
         'pricePkn': 12.5,
         'language': 'EN',
         'condition': 'NM',
+        'reverse': true,
         'sourceListingId': linked ? 'held-1' : ''
       });
       final inventory = InventoryListing.fromJson(backend.rows.single);
@@ -214,6 +236,137 @@ void main() {
       expect(backend.writes, 2);
     });
   }
+
+  test('historical EN listings do not block relisting or change the IT copy',
+      () async {
+    final backend = _Backend();
+    addTearDown(backend.client.close);
+    backend.rows.addAll([
+      _linkedRow('old-en', updated: '2026-11-01T10:00:00Z'),
+      _linkedRow('latest-en'),
+      _linkedRow('active-it',
+          status: 'active', language: 'IT', source: 'held-it'),
+    ]);
+    final italian = Map<String, dynamic>.from(backend.rows.last);
+    final controller = await _controller(backend);
+    addTearDown(controller.dispose);
+    final collection = _collection();
+    final target = controller.targets(collection, '24', 'EN').single;
+    expect(
+        await controller.change(
+            collection, target, CollectionDisposition.listing, 12.5),
+        isTrue);
+    expect(backend.writes, 1);
+    expect(backend.published, isNull);
+    expect(backend.rows, hasLength(3));
+    expect(backend.rows[0]['status'], 'inactive');
+    expect(backend.rows[1]['status'], 'active');
+    expect(backend.rows[1]['pricePkn'], 12.5);
+    expect(backend.rows[2], italian);
+  });
+
+  test(
+      'an explicit holding listingId resolves inactive history and legacy links',
+      () async {
+    final backend = _Backend();
+    addTearDown(backend.client.close);
+    backend.holding['listingId'] = 'explicit-en';
+    backend.rows.addAll([
+      _linkedRow('explicit-en', source: '', updated: '2026-11-01T10:00:00Z'),
+      _linkedRow('latest-en'),
+    ]);
+    final collection = _collection(backend.holding);
+    final target =
+        CollectionListingService.targets(collection, '24', 'EN').single;
+    await backend.service
+        .move('owner', target, CollectionDisposition.listing, 12.5);
+    expect(backend.writes, 1);
+    expect(backend.published, isNull);
+    expect(backend.rows.first['status'], 'active');
+    expect(backend.rows.last['status'], 'inactive');
+  });
+
+  test(
+      'a live EN listing is reused instead of duplicating a stale held snapshot',
+      () async {
+    final backend = _Backend();
+    addTearDown(backend.client.close);
+    backend.rows.addAll([
+      _linkedRow('active-en', status: 'active'),
+      _linkedRow('old-en'),
+    ]);
+    final target =
+        CollectionListingService.targets(_collection(), '24', 'EN').single;
+    await backend.service
+        .move('owner', target, CollectionDisposition.listing, 12.5);
+    expect(backend.writes, 1);
+    expect(backend.published, isNull);
+    expect(backend.rows, hasLength(2));
+    expect(backend.rows.first['pricePkn'], 12.5);
+    expect(backend.rows.last['status'], 'inactive');
+  });
+
+  test('two live linked listings remain blocked without any write', () async {
+    final backend = _Backend();
+    addTearDown(backend.client.close);
+    backend.rows.addAll([
+      _linkedRow('active-en-1', status: 'active'),
+      _linkedRow('active-en-2', status: 'active'),
+    ]);
+    final controller = await _controller(backend);
+    addTearDown(controller.dispose);
+    final collection = _collection();
+    final target = controller.targets(collection, '24', 'EN').single;
+    expect(
+        await controller.change(
+            collection, target, CollectionDisposition.listing, 12.5),
+        isFalse);
+    expect(controller.error, contains('listing attivi'));
+    expect(controller.uncertain, isFalse);
+    expect(backend.writes, 0);
+  });
+
+  test('inactive listings of another language or finish are never republished',
+      () async {
+    final backend = _Backend();
+    addTearDown(backend.client.close);
+    backend.rows.addAll([
+      _linkedRow('old-it', language: 'IT'),
+      {..._linkedRow('old-standard-en'), 'reverse': false},
+    ]);
+    final target =
+        CollectionListingService.targets(_collection(), '24', 'EN').single;
+    await backend.service
+        .move('owner', target, CollectionDisposition.listing, 12.5);
+    expect(backend.rows, hasLength(3));
+    expect(backend.rows[0]['status'], 'inactive');
+    expect(backend.rows[1]['status'], 'inactive');
+    expect(backend.published!['language'], 'EN');
+    expect(backend.published!['reverse'], isTrue);
+    expect(backend.writes, 1);
+  });
+
+  test('lost reactivation response is verified among historical rows read-only',
+      () async {
+    final backend = _Backend()..loseResponse = true;
+    addTearDown(backend.client.close);
+    backend.rows.addAll([
+      _linkedRow('old-en', updated: '2026-11-01T10:00:00Z'),
+      _linkedRow('latest-en'),
+    ]);
+    final controller = await _controller(backend);
+    addTearDown(controller.dispose);
+    final collection = _collection();
+    final target = controller.targets(collection, '24', 'EN').single;
+    expect(
+        await controller.change(
+            collection, target, CollectionDisposition.listing, 12.5),
+        isFalse);
+    expect(controller.uncertain, isTrue);
+    expect(await controller.verifyPending(), isTrue);
+    expect(backend.writes, 1);
+    expect(backend.published, isNull);
+  });
 
   test(
       'lost write response requires read-only verification and never repeats publication',
