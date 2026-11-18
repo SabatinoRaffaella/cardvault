@@ -39,4 +39,4 @@ Il default genera il main Rebuild in modalita profile ARM64, verifica ABI/hash e
 
 Lo storico contiene al massimo tre versioni precedenti distinte. La build non installa automaticamente la app. Il percorso Flutter locale di default e configurabile con `-FlutterPath`.
 
-Questa e una consegna profile per telefono, distinta da una build release firmata per Play Store. La pulizia della repository non cambia la versione `1.2.1+64` e non sostituisce il file gia allegato alla release GitHub `v1.2.1`.
+Questa e una consegna profile per telefono, distinta da una build release firmata per Play Store. La pulizia della repository non cambia la versione `1.2.1+64`. Su richiesta dell'utente, il file allegato alla release GitHub `v1.2.1` e stato sostituito con la build del commit ripulito `1ddffe2`; le note della release riportano sorgente e checksum.

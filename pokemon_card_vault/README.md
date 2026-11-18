@@ -36,6 +36,10 @@ Il controllo ha trovato 1.516 riferimenti Dart locali e nessun import verso i fi
 
 Non cambiano endpoint, autenticazione, policy di cache o codice applicativo Rebuild. I contratti API sono documentazione del servizio esterno, non un server locale da avviare. La documentazione storica puo citare file server: recuperare la versione al tag `v1.2.1` o consultare `upstream`, senza ricreare un backend in questo fork. File ignorati e configurazioni locali non vengono eliminati dalla pulizia dei sorgenti.
 
-La release GitHub `v1.2.1` resta immutata; la pulizia e un commit successivo, senza riscrittura della cronologia.
+Il tag `v1.2.1` conserva lo stato iniziale, senza riscrittura della cronologia.
+Su richiesta dell'utente, l'APK allegato alla stessa release e stato aggiornato
+alla build del commit ripulito `1ddffe2`, con versione invariata `1.2.1+64`.
+Dimensione: 98701436 byte. SHA256:
+`B9B1363033814F605C7B66D843EC5B8C8ACEEDD8BA81BD9B0FC8A6D7E3EED523`.
 
 Verifica dopo la rimozione: analisi statica di `lib/rebuild` senza problemi; build profile ARM64 riuscita tramite helper standard. Controllati il logo condiviso nel pacchetto, la rimozione del vecchio percorso web e il motore Flutter ARM64. Confrontati 578 file client/native/asset/test: cambia solo il percorso del logo legacy. Nessuna suite di test eseguita per questa pulizia. Il funzionamento dei servizi remoti non e provato dalla sola compilazione; endpoint e client Rebuild sono invariati.

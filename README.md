@@ -29,4 +29,4 @@ Marketplace, account, collezione e scanner continuano a usare i servizi remoti g
 - `pokemon_card_vault/scripts/`: build APK, dizionario locale, diagnostica e test isolati delle regole Firestore.
 - `pokemon_card_vault/firestore.rules`: riferimento delle regole di accesso ai dati usati dal client; nessun deploy automatico.
 
-La documentazione operativa del client e in [pokemon_card_vault/README.md](pokemon_card_vault/README.md). La release [1.2.1](https://github.com/SabatinoRaffaella/cardvault/releases/tag/v1.2.1) e il suo APK pubblicato restano invariati.
+La documentazione operativa del client e in [pokemon_card_vault/README.md](pokemon_card_vault/README.md). L'APK della release [1.2.1](https://github.com/SabatinoRaffaella/cardvault/releases/tag/v1.2.1) e stato aggiornato alla build del commit mobile `1ddffe2`, mantenendo la versione `1.2.1+64`. Il tag conserva lo stato iniziale della release; le note collegano il sorgente esatto dell'APK aggiornato.
