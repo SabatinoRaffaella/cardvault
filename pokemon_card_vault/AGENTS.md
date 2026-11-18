@@ -17,7 +17,7 @@
 - `lib/old/main.dart` is the previous application's entry point. Rebuild starts
   from `lib/rebuild/main_mobile_prototype.dart`; choose the target explicitly.
 - Shared `lib/firebase_options.dart` stays at the `lib/` root.
-- Legacy tests and the first-character cache generator use the `old/` paths.
+- Legacy Flutter tests use the `old/` paths; server-side generators live upstream.
 
 ## Mobile Rebuild architecture (user preference)
 
@@ -102,65 +102,49 @@
 - This is a local profile artifact, not a release or production deployment.
   It does not install the APK on a device unless the user asks for installation.
 
-## Local Obsidian updates (user workflow)
+## Local notes and Obsidian updates (user workflow)
 
-- Keep generated note staging, helper scripts and local backup copies under
-  `build/obsidian/<topic>/` instead of creating separate `build/obsidian-*`
-  directories. This groups working copies only; the actual vault stays below.
-- Update the user's local Obsidian documentation after every project change set,
-  before handing off. The existing vault is
-  `C:\Users\raffa\Documents\Obsidian\Pokoin Collaborator\Pokoin`.
-- Read the current hub and relevant notes, update existing claims rather than
-  duplicating them, and keep the file-map MOC and dated Events linked.
-- Preserve existing notes, back up overwritten files, and request write approval
-  when required. Report if an update remains pending; staged notes alone do not
-  count as updating the vault.
-- Follow `../memory/obsidian-documentation.md` for note structure. This local
-  workflow does not synchronize or replace the canonical Pi vault.
+- Latest user preference, 2026-10-22: reduce generated documentation and group
+  it by macro feature. Read `../../notes/README.md` and update existing feature
+  documents instead of adding a note, Event or dated staging folder per edit.
+- Current local note entry points live under `../../notes/`: account, cardex,
+  marketplace, scanner, cart, android-apk, architecture and performance.
+  They are workspace indexes; the repo documents remain operational truth.
+- Reuse `build/obsidian/<feature>/` for helper scripts, staging and compact
+  snapshots of affected text files. Do not create top-level Cardvault folders
+  such as `*-docs-YYYYMMDD`, `*-notes-staging-*` or `obsidian-*-backup-*`.
+- Update the existing relevant feature note in the local Obsidian vault for a
+  meaningful behavioral/architectural change. Minor fixes, class-level edits,
+  style tweaks, routine QA and this local workspace cleanup do not require a
+  new Permanent note or dated Event. One new page/Event is appropriate only
+  for an independent macro feature, significant milestone or explicit request.
+- The vault remains `C:\Users\raffa\Documents\Obsidian\Pokoin Collaborator\Pokoin`.
+  Do not reorganize existing vault notes as part of a Cardvault-only cleanup.
+  Maintain a concise feature-level MOC entry when useful; avoid repeated
+  file-by-file entries and copies of the entire hub/MOC for every adjustment.
+- Preserve existing material. Before a structural note rewrite, back up only
+  the affected files in the reusable feature work folder; keep a maximum of
+  three compact snapshots under an explicit safe retention policy.
+- The user-protected `../../rebuild-cart-check-20261017/build/qa` and its
+  parent workspace must stay at the same paths and must not be cleaned,
+  regenerated or overwritten during note organization.
+- These local user preferences supersede older per-file/per-session note
+  generation rules in `../memory/obsidian-documentation.md`. The existing
+  remote/canonical vault topology is unchanged; no synchronization is implied.
 
-## Production deploy
+## Mobile fork boundary
 
-- **Always** use `./deploy-pokoin-web.sh` for `pokoin.com` production.
-- **Never** run bare `vercel --prod` from the repo root; it deploys API-only and
-  breaks `/`, `/marketplace`, and all Flutter routes with Vercel `404 NOT_FOUND`.
-
-## Incidents
-
-If the site or `/marketplace` shows Vercel `404: NOT_FOUND`, follow:
-
-`workflows/pokoin-vercel-404-recovery-workflow.md`
-
-## Marketplace / cards
-
-`workflows/card-market-page-workflow.md`
-
-Our marketplace id is **our id** (`docs/marketplace-public-ids.md`):
-`marketplace_cards.card_id` = old CardTrader blueprint × 2. We do not use `ct_id`
-in URLs, API, Flutter, or image URLs. Never × 2 a catalog `card.id` or a Fast
-Milo/TCGplayer id. pokoin-marketplace has 018 applied. Codevira D00000B.
-
-## Multi-game CardTrader dump (One Piece / Riftbound)
-
-Qwen: follow these two files. Do not print secrets.
-
-- `workflows/cardtrader-multigame-marketplaces-workflow.md` (importer flags)
-- `/home/nez/secrets/docs/CARDTRADER_MULTIGAME_DUMP.md` (hosts, WARP netns, 403)
-
-Isolated DBs only (`pokoin_one_piece`, `pokoin_riftbound`). Never write into
-Pokemon `public.cardtrader_pokemon_blueprints`. Frankfurt image hosts are
-Cloudflare-403; use netns `igvpn` (nezopt) or `ctvpn` (peer1 WARP). Full
-multithread (`--image-concurrency` 12–16, both games in parallel).
-
-## Crypto swap / bridge
-
-`workflows/swap_bridge-workflow.md`
-
-`workflows/crypto-pkn-purchase-workflow.md`
-
-## Codex in Cursor (local dev)
-
-Use ChatGPT Plus/Pro Codex models inside Cursor via the local proxy:
-
-`workflows/codex-cursor-proxy-workflow.md`
-
-Quick start: `npm run codex:cursor-proxy` (Bun + `codex` auth). Auto-start at login: `npm run codex:cursor-proxy:install-launchagent`. Source: `github:wellbritto98/codex-cursor-proxy`.
+- This fork is `SabatinoRaffaella/cardvault`; `AppMobile` is its sole default branch.
+- `origin` is the user fork; `upstream` is the original project. Do not push to or
+  deploy the original project as part of work in this fork.
+- Site/backend implementation, SQL migrations, workers and deployment scripts
+  were removed after auditing mobile imports and bundled assets. They remain in
+  the history at `v1.2.1` and upstream. Historical documentation is reference only.
+- Preserve the remote API clients, Firebase configuration/rules, native projects,
+  scanner models, local suggestion package/assets, Flutter tests and APK helper.
+- `lib/old/` remains a reference client; its shared SVG now uses
+  `assets/brand/pokoin.svg`. Do not restore the deleted web folder to load a logo.
+- The app still depends on live Pokoin/Firebase services. Removing local server
+  source does not change, deploy, stop or replace those services.
+- Public marketplace IDs are canonical card IDs, never a CardTrader ID in URLs.
+  See `docs/marketplace-public-ids.md` before changing card IDs or image URLs.

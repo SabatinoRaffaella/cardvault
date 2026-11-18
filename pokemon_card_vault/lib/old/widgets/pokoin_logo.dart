@@ -9,7 +9,7 @@ class PokoinLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SvgPicture.asset(
-      'web/pokoin.svg',
+      'assets/brand/pokoin.svg',
       width: size,
       height: size,
       semanticsLabel: 'Pokoin logo',

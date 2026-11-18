@@ -1,63 +1,32 @@
-# CardVault + Pokoin Wallet
+# Pokoin Mobile
 
-CardVault is the public web app for the Pokoin ecosystem. It serves both the crypto-native Pokemon card marketplace and the Pokoin Wallet from one Flutter web deployment.
+Fork mobile mantenuto in [SabatinoRaffaella/cardvault](https://github.com/SabatinoRaffaella/cardvault), branch predefinito `AppMobile`.
 
-## Live URLs
+Il progetto Flutter vive in `pokemon_card_vault/`; il punto di ingresso attivo e `lib/rebuild/main_mobile_prototype.dart`. Versione corrente: **1.2.1+64**.
 
-- Main site: `https://pokoin.com/`
-- Integrated wallet: `https://pokoin.com/wallet`
-- PokoinPoS RPC: `https://rpc.pokoin.com/rpc`
-- Explorer: `https://explorer.pokoin.com`
+## Avvio Android
 
-## Current Architecture
-
-The site and wallet are now a single Flutter web app:
-
-- CardVault marketplace routes live at `/`, `/marketplace`, `/profile`, `/orders`, and related app routes.
-- Pokoin Wallet lives at `/wallet` inside the same Flutter router and bundle.
-- Vercel serves one `index.html` and rewrites app routes back to the SPA.
-- MetaMask/Pokoin network bridge JavaScript is embedded in the app's `web/index.html`.
-- Firebase Auth and Firestore power site accounts, profiles, marketplace balances, orders, and withdraw requests.
-
-The older standalone Vercel project for `cardvault-lemon.vercel.app` has been removed. Production is now the `web` Vercel project serving `pokoin.com`.
-
-## Repository Layout
-
-- `pokemon_card_vault/`: Flutter app source.
-- `pokemon_card_vault/lib/screens/`: CardVault screens and routed pages.
-- `pokemon_card_vault/lib/services/`: Firebase and marketplace service layer.
-- `pokemon_card_vault/docs/firebase-data-model.md`: Firestore data model.
-- `pokemon_card_vault/firestore.rules`: Firestore access rules.
-- `pokemon_card_vault/web/vercel.json`: SPA rewrite configuration for Vercel.
-
-## Local Project Boundary
-
-CardVault is separate from the PokoinPoS repo. Local operator scripts may read
-PokoinPoS bootstrap peers or Oracle env files through `POKOINPOS_ROOT`, which
-defaults to `/Users/giuseppe/pokoinpos` on this machine. Keep chain/node runtime
-changes in the PokoinPoS checkout and web/marketplace changes in this repo.
-
-## Development
-
-```bash
+```powershell
 cd pokemon_card_vault
 flutter pub get
-flutter run -d chrome
+flutter run --target lib/rebuild/main_mobile_prototype.dart -d <device-id>
 ```
 
-## Build And Deploy
+Per prerequisiti, modelli locali dello scanner e APK leggere [INSTALLATION.md](pokemon_card_vault/INSTALLATION.md).
 
-```bash
-cd pokemon_card_vault
-flutter build web --release --pwa-strategy=none
-vercel deploy build/web --prod
-```
+## Confine del fork
 
-After deploy, verify:
+Questa copia contiene il client mobile, i progetti nativi Flutter, gli asset, i test Flutter e i contratti API utili al client. Le implementazioni server, le migrazioni del database, il sito HTML, i worker CDN e gli script di deploy/importazione sono stati rimossi dal branch mobile dopo il controllo delle dipendenze. Il tag `v1.2.1` conserva lo stato precedente alla pulizia.
 
-```bash
-curl -I https://pokoin.com/
-curl -I https://pokoin.com/wallet
-```
+Marketplace, account, collezione e scanner continuano a usare i servizi remoti gia configurati. Rimuovere una copia locale del server non spegne quei servizi e non rende autonoma offline la app. Il repository originale resta disponibile tramite il remote `upstream`; `origin` punta a questo fork. Le modifiche upstream vengono integrate soltanto con una operazione Git esplicita.
 
-Both routes should return `200` and serve the same SPA.
+## Struttura
+
+- `pokemon_card_vault/lib/rebuild/`: codice mobile attivo.
+- `pokemon_card_vault/lib/old/`: precedente client Flutter, conservato come riferimento insieme ai suoi test.
+- `pokemon_card_vault/assets/`, `android/`, `ios/`: risorse e progetti nativi.
+- `pokemon_card_vault/docs/`: funzionalita mobile e contratti API di riferimento.
+- `pokemon_card_vault/scripts/`: build APK, dizionario locale, diagnostica e test isolati delle regole Firestore.
+- `pokemon_card_vault/firestore.rules`: riferimento delle regole di accesso ai dati usati dal client; nessun deploy automatico.
+
+La documentazione operativa del client e in [pokemon_card_vault/README.md](pokemon_card_vault/README.md). La release [1.2.1](https://github.com/SabatinoRaffaella/cardvault/releases/tag/v1.2.1) e il suo APK pubblicato restano invariati.

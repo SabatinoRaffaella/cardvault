@@ -1,311 +1,41 @@
-# Pokoin Marketplace And Wallet
+# Pokoin Mobile Rebuild
 
-Pokoin is a Flutter web app for the Pokoin ecosystem. It combines a crypto-native Pokemon card marketplace with the Pokoin Wallet in one deployed web application.
+Client Flutter mobile del fork `SabatinoRaffaella/cardvault`, branch `AppMobile`. Versione: **1.2.1+64**; punto di ingresso `lib/rebuild/main_mobile_prototype.dart`.
 
-## AppMobile entry points
+## Sviluppo
 
-On the `AppMobile` branch, choose the application target explicitly:
-
-| Application | Entry point | Run command |
-| --- | --- | --- |
-| Current mobile Rebuild | `lib/rebuild/main_mobile_prototype.dart` | `flutter run --target lib/rebuild/main_mobile_prototype.dart` |
-| Previous application reference | `lib/old/main.dart` | `flutter run --target lib/old/main.dart` |
-
-The previous application is contained in `lib/old/`. Firebase configuration
-remains shared at `lib/firebase_options.dart`; this branch has no root
-`lib/main.dart`. Existing web scripts continue to select the previous application;
-the local phone APK helper defaults to Rebuild.
-
-### Mobile Rebuild 1.2.0 (build 62)
-
-- Cardex: explicit Collection / Listing switch with publication confirmation
-  and read-back verification, keeping ownership and sale status distinct.
-- Portfolio: active listings and asking prices in PKN, plus an on-demand drawer
-  with the account's historical value chart (cards and liquidity).
-- Dungeon Crawler: Scanner pixel art and a local Poko wardrobe beside the
-  Profile palette, with independent head, hand and feet choices.
-
-The version is maintained in `pubspec.yaml` as `1.2.0+62`. The visible version
-is 1.2.0; Android build numbers increase independently. This is a feature/minor
-update, not a breaking 2.0 migration. The profile ARM64 APK is a local handoff
-artifact and is not committed or published as a GitHub release.
-
-## Live App
-
-- Main site: `https://pokoin.com/`
-- Wallet route: `https://pokoin.com/wallet`
-- PokoinPoS RPC: `https://rpc.pokoin.com/rpc`
-- Explorer: `https://explorer.pokoin.com`
-
-The site and wallet are no longer separate Vercel apps or separate Flutter deployments. Vercel serves one Flutter SPA, and `/wallet` is handled by the same router and bundle as the main Pokoin site.
-
-## Features
-
-### Marketplace Core
-- **Oracle-backed Card Catalog**: Browse CardTrader blueprint projections through lightweight Vercel APIs.
-- **Real Homepage Sections**: Best sellers and Featured are resolved from Oracle snapshot IDs backed by rolling hot-blueprint analytics.
-- **CardTrader-style Search**: Autocomplete uses Oracle-backed Vercel APIs, structured token intersection for queries like `flareon ex`, and direct Flutter rendering of the returned preview rows.
-- **Seller Listings**: Live offers are stored in Firestore with condition, language, reverse holo, signed, graded, NFT, shipping, price, and quantity metadata.
-- **Shopping Cart And Checkout**: Cart rows reference exact seller listings and preserve listing snapshots.
-- **User Authentication**: Firebase email/password and Google login on the main site.
-
-### Pokoin Wallet
-- **Integrated Route**: Wallet is served from `/wallet` in the same Flutter app
-- **PokoinPoS Network**: Chain ID `26062026` (`0x18dacca`), currency `PKN`
-- **MetaMask Bridge**: Add/switch to the PokoinPoS network from the browser
-- **Live Balance**: Read native PKN balances from the public RPC
-- **Send Flow**: Submit wallet transactions through a browser wallet
-- **wPKN Link**: Shortcut to the PancakeSwap wPKN market
-- **Native NFTs**: PokoinPoS exposes first-class chain NFTs through RPC APIs;
-  inventory should be rendered by Pokoin/Card Vault or explorer UI, not
-  MetaMask's NFT tab. See `docs/native-nfts.md`.
-
-Common user actions such as checking live status, using the wallet, adding
-MetaMask, buying/understanding PKN, swapping, selling/listing cards, searching,
-NFTs, running nodes, and reporting bugs are documented in
-`docs/common-user-actions.md`.
-
-### Advanced Marketplace Features
-- **Hot Card Analytics**: `marketplace_card_events` rolls into `marketplace_hot_blueprints` with 1h, 24h, and 7d scores for views, searches, clicks, cart adds, reserves, and sales events.
-- **Marketplace Signal**: Reserve/listing analytics summarize active Firestore listings without presenting unsettled interaction events as completed sales.
-- **Wishlist**: Save favorite cards for later purchase.
-- **Card Grading**: Seller listings support graded cards with grading company and grade.
-- **Condition Tracking**: Card condition (NM, LP, MP, HP, DMG).
-
-### UI/UX Features
-- **Material Design 3**: Modern, beautiful interface
-- **Responsive Design**: Works on phones, tablets, and web
-- **Dark/Light Theme**: User preference support
-- **Animations**: Smooth transitions and micro-interactions
-- **Image Optimization**: Cached network images with placeholders
-- **Shimmer Loading**: Beautiful loading states
-
-### Technical Features
-- **State Management**: Riverpod for reactive state management
-- **Local Storage**: Hive for offline data persistence
-- **API Integration**: Vercel serverless APIs backed by Oracle Postgres and Firebase/Firestore
-- **Firebase Backend**: Auth, Firestore profiles, balances, orders, and withdraw requests
-- **Oracle Marketplace Backend**: Catalog/search/home/version projections and hot blueprint analytics
-- **Vercel SPA Routing**: Direct URLs like `/wallet`, `/profile`, and `/orders` route into the same app
-- **Analytics**: Bounded marketplace interaction events with non-PII card/search metadata
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Flutter SDK (3.0.0 or higher)
-- Dart SDK (3.0.0 or higher)
-- Android Studio / VS Code
-- Git
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/GiuseppeVitolo17/pokoin.git
-   cd pokoin/pokemon_card_vault
-   ```
-
-2. **Install dependencies**
-   ```bash
-   flutter pub get
-   ```
-
-3. **Generate Hive adapters**
-   ```bash
-   flutter packages pub run build_runner build
-   ```
-
-4. **Run the app**
-   ```bash
-   flutter run --target lib/old/main.dart
-   ```
-
-## Main Screens
-
-### Home Screen
-- Real Best sellers and Featured carousels from Oracle snapshot sections
-- Category filters
-- Marketplace autocomplete
-- Card grid with filters
-
-### Card Detail
-- High-resolution card images
-- Seller listing table and no-listing sell/wishlist state
-- Previous/next within the same expansion
-- Other versions by name and expansion
-
-### Shopping Cart
-- Item management
-- Quantity controls
-- Price calculations
-- Checkout process
-
-### User Profile
-- Account management
-- Order history
-- Settings and preferences
-
-## 🏗️ Architecture
-
-### Project Structure
-```
-lib/
-├── constants/          # App constants and colors
-├── models/             # Data models and Hive adapters
-├── providers/          # Riverpod state management
-├── screens/            # UI screens
-├── services/           # API and business logic
-├── utils/              # Utility functions
-└── widgets/            # Reusable UI components
+```powershell
+flutter pub get
+flutter run --target lib/rebuild/main_mobile_prototype.dart -d <device-id>
 ```
 
-### State Management
-- **Riverpod**: Reactive state management
-- **Providers**: Card, Cart, User, Order providers
-- **Notifiers**: State notifiers for complex state logic
+Vedere [INSTALLATION.md](INSTALLATION.md) per ambiente Android, asset scanner non versionati e consegna APK. Il codice attivo segue Provider/DAO -> Service -> Controller -> Presentation; le schermate sono in `lib/rebuild/presentation/`, con `component/` e `atomics/`; gli stili in `style/`.
 
-### Data Layer
-- **Hive**: Local cache for cards and home snapshots.
-- **Oracle Postgres**: Marketplace catalog, search projections, expansion versions, variation dimensions, Cardmarket parsing metadata, and hot blueprint rollups.
-- **Vercel APIs**: `/api/marketplace-home`, `/api/marketplace-cards`, `/api/marketplace-card-versions`, `/api/marketplace-search-candidates`, `/api/marketplace-autocomplete`, `/api/marketplace-event`, and `/api/marketplace-hot-blueprints`.
-- **Firebase/Firestore**: Identity, user profiles, wallet/account state, seller listings, carts, orders, and forum-authenticated writes.
+`lib/old/` conserva il precedente client e i suoi import condizionali web come riferimento. Non e il target della build mobile. I progetti iOS e desktop Flutter restano disponibili, ma questa pulizia e verificata con la build Android ARM64.
 
-## Configuration
+## Funzionalita e documentazione
 
-### Firebase Setup
-The app is configured for the `pokoin` Firebase project.
+- [Account e profilo](docs/rebuild-account.md).
+- [Ricerca Marketplace](docs/rebuild-marketplace-search.md) e [caricamento caroselli](docs/rebuild-discovery-loading.md).
+- [Cardex e Portfolio](docs/rebuild-cardex.md).
+- [Carrello, persistenza e Checkout a bundle](docs/rebuild-cart.md).
+- [Scanner](docs/rebuild-scanner.md) e [asset locali richiesti](assets/README-scan-assets.md).
+- [Identificativi pubblici delle carte](docs/marketplace-public-ids.md), [API](docs/pokoin-api.md) e [contratti delle pagine](docs/react-page-apis.md).
 
-Required Firebase services:
+La 1.2.1 include finestra centrale per offerte/venditori, pressione lunga e trascinamento verso alto per rimuovere una copia, Annulla e cambio laterale dei bundle. Il Checkout e ancora un riepilogo senza invio ordini/pagamenti.
 
-1. Authentication with Email/Password enabled.
-2. Authentication with Google enabled for the main site.
-3. Cloud Firestore.
-4. Firestore rules from `firestore.rules` deployed.
+## Dipendenze esterne preservate
 
-Data model details are documented in `docs/firebase-data-model.md`.
+Il client legge le API remote (`https://api.pokoin.com` nei provider che espongono `MARKETPLACE_API_BASE_URL`) e usa Firebase Auth/Firestore con le configurazioni esistenti. Modelli scanner e indici CNN vengono forniti separatamente e restano esclusi da Git. Nessun servizio server e incluso nella compilazione Android.
 
-### Oracle Marketplace Setup
+Manteniamo `lib/`, tutti gli asset del manifest, i progetti nativi Flutter, `pubspec.yaml`/lock, Firebase e le regole Firestore, tutti i test Flutter e il generatore del dizionario locale. Il logo SVG condiviso e in `assets/brand/pokoin.svg`, gia identico alla vecchia copia web.
 
-Marketplace catalog/search data lives in Oracle Postgres. Schema and migration details are documented in `oracle-postgres/README.md`. Vercel production must have `MARKETPLACE_DATABASE_URL` configured before deploying marketplace APIs.
+## Pulizia del sito/backend
 
-### Native NFT Runtime
+Il controllo ha trovato 1.516 riferimenti Dart locali e nessun import verso i file server/sito candidati alla rimozione. Sono stati rimossi 894 file versionati: API/server Node, SQL/Prisma/Supabase, pagine web, configurazioni Vercel/Cloudflare, artefatti di revisione immagini e script server/deploy/importazione, inclusi i relativi test esclusivamente backend. I test Flutter e il progetto isolato delle regole Firestore sono conservati.
 
-Native Pokoin NFTs are documented in `docs/native-nfts.md`. They are ledger
-objects exposed by the PokoinPoS RPC, with ownership on-chain and card metadata
-referenced by URI/hash fields.
+Non cambiano endpoint, autenticazione, policy di cache o codice applicativo Rebuild. I contratti API sono documentazione del servizio esterno, non un server locale da avviare. La documentazione storica puo citare file server: recuperare la versione al tag `v1.2.1` o consultare `upstream`, senza ricreare un backend in questo fork. File ignorati e configurazioni locali non vengono eliminati dalla pulizia dei sorgenti.
 
-## 📦 Dependencies
+La release GitHub `v1.2.1` resta immutata; la pulizia e un commit successivo, senza riscrittura della cronologia.
 
-### Core Dependencies
-- `flutter_riverpod`: State management
-- `go_router`: Navigation
-- `hive_flutter`: Local storage
-- `http`: API communication
-- `cached_network_image`: Image caching
-
-### UI Dependencies
-- `flutter_screenutil`: Responsive design
-- `carousel_slider`: Image carousels
-- `shimmer`: Loading animations
-- `lottie`: Advanced animations
-
-### E-commerce Dependencies
-- `stripe_payment`: Payment processing
-- `firebase_auth`: Authentication
-- `firebase_firestore`: Cloud database
-- `firebase_storage`: File storage
-
-## 🎨 Customization
-
-### Colors
-Edit `lib/constants/app_colors.dart` to customize the app's color scheme:
-```dart
-class AppColors {
-  static const Color primary = Color(0xFF2E7D32);
-  static const Color secondary = Color(0xFF4CAF50);
-  // ... more colors
-}
-```
-
-### Themes
-Modify the previous application theme in `lib/old/main.dart`:
-```dart
-theme: ThemeData(
-  primarySwatch: Colors.green,
-  primaryColor: AppColors.primary,
-  // ... theme configuration
-),
-```
-
-## 🚀 Deployment
-
-### Android
-1. Generate a signed APK:
-   ```bash
-   flutter build apk --target lib/old/main.dart --release
-   ```
-
-2. Or build an App Bundle:
-   ```bash
-   flutter build appbundle --target lib/old/main.dart --release
-   ```
-
-### iOS
-1. Build for iOS:
-   ```bash
-   flutter build ios --target lib/old/main.dart --release
-   ```
-
-### Web
-Build and deploy the single app through the project deploy script:
-
-```bash
-./deploy-pokoin-web.sh
-```
-
-Do not run plain `vercel deploy` from the project root. The deploy script builds Flutter, copies API functions into `build/web/api`, rewrites server helper imports, verifies required wallet/API files, deploys the Vercel output, then verifies the produced deployment URL and production aliases before returning success.
-
-After a production deploy the script sets `pokoin.com`, `www.pokoin.com`, and the managed Pokoin web aliases to the new deployment. It then fails non-zero if the deployment URL or custom domains do not serve healthy pages/API responses, including protection against Vercel `404: NOT_FOUND`.
-
-```bash
-node scripts/verify-production-aliases.js --deployment-url <deployment-url> --set-aliases
-```
-
-The verifier checks `/`, `/marketplace`, a representative marketplace card route, and `/api/marketplace-home` JSON on the deployment URL and canonical custom domains.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- CardTrader and Oracle Postgres marketplace projections for card catalog data
-- Flutter team for the amazing framework
-- Material Design for UI guidelines
-- Open source community for inspiration
-
-## 🔮 Future Features
-
-- [ ] Auction system for rare cards
-- [ ] Trading system between users
-- [ ] Card collection tracking
-- [ ] Price alerts and notifications
-- [ ] Social features and communities
-- [ ] AR card viewing
-- [ ] Blockchain integration for authenticity
-- [ ] Multi-language support
-- [x] Rolling hot-card analytics for homepage sections
-- [ ] Settled-sale analytics dashboard
-- [ ] Mobile app for sellers
-
----
-
-Made with ❤️ by Giuseppe Vitolo
+Verifica dopo la rimozione: analisi statica di `lib/rebuild` senza problemi; build profile ARM64 riuscita tramite helper standard. Controllati il logo condiviso nel pacchetto, la rimozione del vecchio percorso web e il motore Flutter ARM64. Confrontati 578 file client/native/asset/test: cambia solo il percorso del logo legacy. Nessuna suite di test eseguita per questa pulizia. Il funzionamento dei servizi remoti non e provato dalla sola compilazione; endpoint e client Rebuild sono invariati.

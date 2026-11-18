@@ -1,3 +1,13 @@
+## Mobile fork scope
+
+This checkout is the mobile fork `SabatinoRaffaella/cardvault`, default branch
+`AppMobile`. Site/server implementations and deployment tools were removed from
+this branch after checking mobile dependencies. Retained Codevira memory below
+describes upstream history, not a request to restore or operate those services.
+Follow `pokemon_card_vault/AGENTS.md` for the mobile entry point, APK workflow and
+workspace preservation rules. No backend or website deployment belongs to this
+cleanup. The existing `v1.2.1` tag/release remains unchanged.
+
 <!-- codevira:begin (auto-generated; do not edit) -->
 
 ## Codevira-tracked project memory: cardvault-repo
