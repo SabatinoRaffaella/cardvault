@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../controller/checkout_controller.dart';
 import '../../../model/checkout_group.dart';
 import '../atomics/checkout_bundle_gesture.dart';
+import '../atomics/checkout_inspection_mode.dart';
 import 'checkout_stack_picker.dart';
 
 class CheckoutPileCard extends StatelessWidget {
@@ -11,12 +12,16 @@ class CheckoutPileCard extends StatelessWidget {
       required this.controller,
       required this.onOpenGroup,
       required this.onRemoveCopy,
+      this.inspecting = false,
+      this.onInspectionChanged,
       this.onNext,
       this.onPrevious});
   final CheckoutPile pile;
   final CheckoutController controller;
   final ValueChanged<CheckoutGroupKey> onOpenGroup;
   final ValueChanged<String> onRemoveCopy;
+  final bool inspecting;
+  final ValueChanged<bool>? onInspectionChanged;
   final VoidCallback? onNext, onPrevious;
 
   @override
@@ -28,10 +33,18 @@ class CheckoutPileCard extends StatelessWidget {
       const SizedBox(height: 4),
       Text('${pile.quantity} carte · ${pile.groups.length} gruppi'),
       const SizedBox(height: 12),
+      if (onInspectionChanged != null) ...[
+        CheckoutInspectionMode(
+            inspecting: inspecting, onChanged: onInspectionChanged!),
+        const SizedBox(height: 12),
+      ],
       CheckoutStackPicker(
           groups: pile.groups,
           selected: active.key,
-          onSelected: onOpenGroup,
+          included: controller.selectionFor(active),
+          onSelected: (key) => controller.selectPileGroup(pile, key),
+          inspecting: inspecting,
+          onInspect: onOpenGroup,
           stackBuilder: (stack) => CheckoutBundleGesture(
               key: const ValueKey('checkout-bundle-gesture'),
               targetId: '${controller.cart.sessionVersion}:${offer.listing.id}',
@@ -40,10 +53,17 @@ class CheckoutPileCard extends StatelessWidget {
                   : null,
               onNext: onNext,
               onPrevious: onPrevious,
+              selected: controller.selectionFor(active),
+              selectionLabel:
+                  'Seleziona gruppo · ${active.key.condition} · ${active.key.language}',
+              onToggleSelection: controller.cart.canEdit
+                  ? () => controller.selectGroup(
+                      active, controller.selectionFor(active) != true)
+                  : null,
               child: stack)),
       TextButton.icon(
           onPressed: () => onOpenGroup(active.key),
-          icon: const Icon(Icons.info_outline),
+          icon: const Icon(Icons.zoom_in),
           label: const Text('Vedi offerte e venditori')),
     ]);
   }

@@ -22,7 +22,7 @@ Vedere [INSTALLATION.md](INSTALLATION.md) per ambiente Android, asset scanner no
 - [Scanner](docs/rebuild-scanner.md) e [asset locali richiesti](assets/README-scan-assets.md).
 - [Identificativi pubblici delle carte](docs/marketplace-public-ids.md), [API](docs/pokoin-api.md) e [contratti delle pagine](docs/react-page-apis.md).
 
-La 1.2.1 include finestra centrale per offerte/venditori, pressione lunga e trascinamento verso alto per rimuovere una copia, Annulla e cambio laterale dei bundle. Il Checkout e ancora un riepilogo senza invio ordini/pagamenti.
+La 1.2.1 include finestra centrale compatta per offerte/venditori, palette crema/marrone/oliva, carosello di carte verticali con gruppo attivo centrale e vicini in prospettiva. Sfoglia cambia gruppo al tocco; Lente apre le informazioni. La pressione lunga mostra la checkbox del solo gruppo attivo; trascinamento in alto, Annulla e cambio laterale dei bundle restano disponibili. Il Checkout e ancora un riepilogo senza invio ordini/pagamenti.
 
 ## Dipendenze esterne preservate
 
@@ -38,8 +38,9 @@ Non cambiano endpoint, autenticazione, policy di cache o codice applicativo Rebu
 
 Il tag `v1.2.1` conserva lo stato iniziale, senza riscrittura della cronologia.
 Su richiesta dell'utente, l'APK allegato alla stessa release e stato aggiornato
-alla build del commit ripulito `1ddffe2`, con versione invariata `1.2.1+64`.
-Dimensione: 98701436 byte. SHA256:
-`B9B1363033814F605C7B66D843EC5B8C8ACEEDD8BA81BD9B0FC8A6D7E3EED523`.
+alla build del Checkout verticale descritta sopra, con versione invariata `1.2.1+64`.
+Le note della release indicano il commit sorgente esatto dell'APK.
+Dimensione: 103839245 byte. SHA256:
+`6031BBF877BC07CD501E28FE12FC81536AFC40F0D268F1D32B22CC2025981614`.
 
 Verifica dopo la rimozione: analisi statica di `lib/rebuild` senza problemi; build profile ARM64 riuscita tramite helper standard. Controllati il logo condiviso nel pacchetto, la rimozione del vecchio percorso web e il motore Flutter ARM64. Confrontati 578 file client/native/asset/test: cambia solo il percorso del logo legacy. Nessuna suite di test eseguita per questa pulizia. Il funzionamento dei servizi remoti non e provato dalla sola compilazione; endpoint e client Rebuild sono invariati.

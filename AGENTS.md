@@ -6,8 +6,8 @@ this branch after checking mobile dependencies. Retained Codevira memory below
 describes upstream history, not a request to restore or operate those services.
 Follow `pokemon_card_vault/AGENTS.md` for the mobile entry point, APK workflow and
 workspace preservation rules. No backend or website deployment belongs to this
-cleanup. The `v1.2.1` tag retains its original commit; its release APK was updated
-at the user's request to the cleaned mobile build from `1ddffe2`.
+cleanup. The `v1.2.1` tag retains its original commit; the release notes identify
+the exact source commit and checksum of APK updates explicitly requested by the user.
 
 <!-- codevira:begin (auto-generated; do not edit) -->
 

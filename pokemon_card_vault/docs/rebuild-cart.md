@@ -51,7 +51,7 @@ selected seller through a shifting numeric index. Shared cart loading and accoun
 changes clear unavailable rows through the existing cart lifecycle. Disposing
 Checkout detaches its listener without disposing the shared cart.
 
-The Checkout overview presents separate overlapping 2.5D stacks per Pokemon
+The Checkout overview presents separate upright card carousels per Pokemon
 name family. `CheckoutService.piles` adds an insertion-ordered parent map above
 the exact card/condition/language/variant groups: Espeon and Espeon EX can share
 the Espeon pile, while Flareon is a separate pile. The current card model has no
@@ -64,21 +64,37 @@ persisted card or listing identities.
 Checkout displays one family bundle at a time, with previous/next buttons and
 a hold-and-drag gesture: left advances, right returns to the previous bundle.
 Each pile retains its own active group and offer selection.
-Up to three group faces are drawn per visible pile, with at most five paper
-layers per group while numeric quantities remain exact. Each exact group's
+The active group is upright, centered and in front. Up to two neighboring group
+faces per side appear smaller and turned slightly in perspective; only these
+visible groups build cached artwork. Up to four paper layers indicate copies,
+while numeric quantities remain exact. The carousel uses the available width,
+keeps the original portrait card ratio and clips outer faces within its viewport.
+A single active-group summary with a thumbnail replaces the repeated group rows;
+previous/next buttons and a bounded position indicator remain below it. Reduced
+motion disables position/transform animations. Each exact group's
 outline color is derived deterministically from its immutable key, not its list
 position: sorting, removing other groups, changing price or reopening Checkout
-does not recolor it. The same accent is used on its face, label and selected
-detail panel. Theme brightness adjusts color lightness for readability.
-Artwork uses the existing image cache without downloading every copy. Tapping
-a group or its label opens a central, scrollable dialog with a close button;
-the visible details button provides the same action. Pokemon from
+does not recolor it. The same accent is used on its face and active summary
+border. Theme brightness adjusts color lightness for readability.
+Artwork uses the existing image cache without downloading every copy. In the
+default Sfoglia mode, tapping a group/face/label changes only the active group.
+The explicit Lente mode makes those taps open its central, scrollable offer dialog;
+previous/next group arrows always browse without opening it. The zoom-icon details
+button provides a direct inspection shortcut in either mode. The screen owns this
+temporary mode across bundle switches; it does not change purchase selection,
+cart persistence, or the hold/drag actions. Pokemon from
 different name families are never inserted into the same visual stack.
 
 The dialog shows an accessible previous/next offer selector, seller/origin,
 country, unit price, cart quantity, selected-copy controls and exact offer/copy
 removal commands delegated to CartController. Holding the stack and dragging up
-removes exactly one copy of its active offer on release. The gesture locks its
+removes exactly one copy of its active offer on release. A stationary hold reveals
+a raised checkbox strip above the stack. Release, then tap it to select/deselect
+the entire active card/condition/language/variant group, including its sellers;
+other groups in the Pokemon bundle are unaffected. Partial selection is shown
+as indeterminate. The strip can be closed and resets when the active offer changes;
+once dragging starts, the action hint replaces it. An equivalent group-selection
+button remains in the dialog for accessibility. The gesture locks its
 axis and requires an 80 logical-pixel movement after a long press; ordinary
 page scrolling and short drags do not remove copies. Buttons remain available.
 Annulla in the snackbar, app bar and dialog restores the last removed copy,
@@ -87,8 +103,18 @@ Undo is scoped to this Checkout route and cart session: account changes invalida
 it. Restoring a removed row uses normal cart persistence without a catalog fetch.
 The layout adapts at narrow widths
 and larger text scales. Empty, loading and persistence-error states use the
-existing cart state. Styling lives in `style/checkout_style.dart` and inherits the
-active application theme.
+existing cart state. Styling lives in `style/checkout_style.dart`: Checkout and its
+dialog use the approved preview's cream/brown/olive palette, respecting brightness
+without changing the saved app appearance or other screens. The dialog's group
+picker is a compact menu button, without a floating form-field label. A single
+offer has a caption without disabled navigation arrows; a single copy has an
+include toggle without an unnecessary quantity stepper. Multi-copy offers retain
+quantity selection, and seller/price information stays in one compact panel.
+
+The compact presentation/hold-selection follow-up preserves existing tests without
+creating or running suites for this styling work. Validation uses source analysis
+and the standard local profile ARM64 APK build; phone interaction remains a manual
+check. Earlier test totals below refer to the initial functional implementation.
 
 Validation for 1.2.1: 23 targeted Checkout/cart tests passed, covering grouping,
 offer selection, one-copy removal, Undo persistence/account isolation, directional

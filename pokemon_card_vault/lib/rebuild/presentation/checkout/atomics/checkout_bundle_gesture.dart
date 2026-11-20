@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
 enum _BundleDirection { remove, next, previous }
@@ -11,10 +12,16 @@ class CheckoutBundleGesture extends StatefulWidget {
       required this.child,
       this.onRemove,
       this.onNext,
-      this.onPrevious});
+      this.onPrevious,
+      this.selected,
+      this.selectionLabel = 'Seleziona gruppo',
+      this.onToggleSelection});
   final String targetId;
   final Widget child;
   final VoidCallback? onRemove, onNext, onPrevious;
+  final bool? selected;
+  final String selectionLabel;
+  final VoidCallback? onToggleSelection;
   @override
   State<CheckoutBundleGesture> createState() => _CheckoutBundleGestureState();
 }
@@ -23,11 +30,13 @@ class _CheckoutBundleGestureState extends State<CheckoutBundleGesture> {
   Offset _offset = Offset.zero;
   _BundleDirection? _direction;
   bool _holding = false;
+  bool _selectionVisible = false;
   VoidCallback? _removeAtStart;
   static const _threshold = 80.0;
 
   void _reset() {
     _holding = false;
+    _selectionVisible = false;
     _offset = Offset.zero;
     _direction = null;
     _removeAtStart = null;
@@ -76,7 +85,11 @@ class _CheckoutBundleGestureState extends State<CheckoutBundleGesture> {
             null => null,
           }
         : null;
-    setState(_reset);
+    final keepSelection = action == null && _selectionVisible;
+    setState(() {
+      _reset();
+      _selectionVisible = keepSelection;
+    });
     action?.call();
   }
 
@@ -84,7 +97,7 @@ class _CheckoutBundleGestureState extends State<CheckoutBundleGesture> {
   Widget build(BuildContext context) {
     final ready = _offset.distance >= _threshold;
     final label = !_holding
-        ? 'Tieni premuto: ↑ rimuovi una copia · ← cambia bundle'
+        ? 'Tieni premuto per selezionare o trascinare'
         : switch (_direction) {
             _BundleDirection.remove => ready
                 ? 'Rilascia per rimuovere una copia'
@@ -97,34 +110,75 @@ class _CheckoutBundleGestureState extends State<CheckoutBundleGesture> {
                 : 'Trascina ancora a destra',
             null => '↑ Rimuovi una copia · ← Cambia bundle',
           };
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 48),
-          child: Center(
-              child: Text(label,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: ready
-                          ? Theme.of(context).colorScheme.primary
-                          : null)))),
-      GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onLongPressStart: (_) {
-            _removeAtStart = widget.onRemove;
-            setState(() => _holding = true);
-            HapticFeedback.selectionClick();
-          },
-          onLongPressMoveUpdate: _move,
-          onLongPressEnd: _finish,
-          onLongPressCancel: () {
-            if (_holding) setState(_reset);
-          },
-          child: AnimatedContainer(
-              duration: _holding || MediaQuery.disableAnimationsOf(context)
-                  ? Duration.zero
-                  : const Duration(milliseconds: 180),
-              transform: Matrix4.translationValues(_offset.dx, _offset.dy, 0),
-              child: widget.child)),
-    ]);
+    return Semantics(
+        customSemanticsActions: widget.onToggleSelection == null
+            ? null
+            : {
+                CustomSemanticsAction(label: widget.selectionLabel):
+                    widget.onToggleSelection!,
+              },
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: _selectionVisible &&
+                      _direction == null &&
+                      widget.onToggleSelection != null
+                  ? Semantics(
+                      liveRegion: true,
+                      child: Material(
+                          color: Theme.of(context).colorScheme.surface,
+                          elevation: 5,
+                          borderRadius: BorderRadius.circular(14),
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                              onTap: widget.onToggleSelection,
+                              child: Row(children: [
+                                Checkbox(
+                                    tristate: true,
+                                    value: widget.selected,
+                                    semanticLabel: widget.selectionLabel,
+                                    onChanged: (_) =>
+                                        widget.onToggleSelection?.call()),
+                                Expanded(
+                                    child: Text(widget.selectionLabel,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis)),
+                                IconButton(
+                                    tooltip: 'Chiudi selezione gruppo',
+                                    onPressed: () => setState(
+                                        () => _selectionVisible = false),
+                                    icon: const Icon(Icons.close, size: 18)),
+                              ]))))
+                  : Center(
+                      child: Text(label,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: ready
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null)))),
+          GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onLongPressStart: (_) {
+                _removeAtStart = widget.onRemove;
+                setState(() {
+                  _holding = true;
+                  _selectionVisible = widget.onToggleSelection != null;
+                });
+                HapticFeedback.selectionClick();
+              },
+              onLongPressMoveUpdate: _move,
+              onLongPressEnd: _finish,
+              onLongPressCancel: () {
+                if (_holding) setState(_reset);
+              },
+              child: AnimatedContainer(
+                  duration: _holding || MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : const Duration(milliseconds: 180),
+                  transform:
+                      Matrix4.translationValues(_offset.dx, _offset.dy, 0),
+                  child: widget.child)),
+        ]));
   }
 }

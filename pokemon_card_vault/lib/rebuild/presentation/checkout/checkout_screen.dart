@@ -3,7 +3,6 @@ import '../../controller/cart_controller.dart';
 import '../../controller/checkout_controller.dart';
 import '../../model/checkout_group.dart';
 import '../../style/checkout_style.dart';
-import '../shared/component/themed_page_background.dart';
 import '../shared/component/utility_bar.dart';
 import '../shared/price_format.dart';
 import 'component/checkout_pile_card.dart';
@@ -26,6 +25,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   late CheckoutController _controller;
   String? _activePileId;
   int _switchDirection = 1;
+  bool _inspecting = false;
   @override
   void initState() {
     super.initState();
@@ -39,6 +39,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _controller.dispose();
       _controller = CheckoutController(widget.cart);
       _activePileId = null;
+      _inspecting = false;
     }
   }
 
@@ -104,7 +105,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => ListenableBuilder(
+  Widget build(BuildContext context) => Theme(
+      data: CheckoutStyle.theme(Theme.of(context)),
+      child: Builder(builder: _buildPage));
+
+  Widget _buildPage(BuildContext context) => ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
         final cart = widget.cart;
@@ -120,7 +125,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   onPressed: _undo,
                   icon: const Icon(Icons.undo)),
           ]),
-          body: ThemedPageBackground(
+          body: ColoredBox(
+              color: Theme.of(context).scaffoldBackgroundColor,
               child: SafeArea(
                   top: false,
                   child: ListView(
@@ -195,6 +201,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 key: ValueKey(piles[activeIndex].id),
                                 pile: piles[activeIndex],
                                 controller: _controller,
+                                inspecting: _inspecting,
+                                onInspectionChanged: (value) =>
+                                    setState(() => _inspecting = value),
                                 onOpenGroup: (key) =>
                                     _openGroup(piles[activeIndex], key),
                                 onRemoveCopy: _removeCopy,

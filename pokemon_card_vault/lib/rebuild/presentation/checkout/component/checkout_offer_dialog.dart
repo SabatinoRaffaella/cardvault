@@ -3,6 +3,7 @@ import '../../../controller/checkout_controller.dart';
 import '../../../model/checkout_group.dart';
 import '../../../style/checkout_style.dart';
 import '../../shared/price_format.dart';
+import '../atomics/checkout_group_button.dart';
 import '../atomics/offer_selector.dart';
 import 'checkout_offer_details.dart';
 
@@ -19,7 +20,11 @@ class CheckoutOfferDialog extends StatelessWidget {
   final VoidCallback onUndo;
 
   @override
-  Widget build(BuildContext context) => ListenableBuilder(
+  Widget build(BuildContext context) => Theme(
+      data: CheckoutStyle.theme(Theme.of(context)),
+      child: Builder(builder: _buildDialog));
+
+  Widget _buildDialog(BuildContext context) => ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
         CheckoutPile? pile;
@@ -35,14 +40,17 @@ class CheckoutOfferDialog extends StatelessWidget {
                 .indexWhere((row) => row.listing.id == offer?.listing.id) ??
             0;
         final colors = Theme.of(context).colorScheme;
+        final selected = group == null ? false : controller.selectionFor(group);
         return Dialog(
+            backgroundColor: colors.surface,
             insetPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-            shape: const RoundedRectangleBorder(
-                borderRadius: CheckoutStyle.radius),
+            shape: RoundedRectangleBorder(
+                borderRadius: CheckoutStyle.radius,
+                side: BorderSide(color: colors.outlineVariant)),
             child: ConstrainedBox(
                 constraints: BoxConstraints(
-                    maxWidth: 480,
+                    maxWidth: 440,
                     maxHeight: MediaQuery.sizeOf(context).height * .82),
                 child: Padding(
                     padding: CheckoutStyle.panelPadding,
@@ -52,7 +60,7 @@ class CheckoutOfferDialog extends StatelessWidget {
                         children: [
                           Row(children: [
                             Expanded(
-                                child: Text('Dettagli bundle',
+                                child: Text('Offerte del gruppo',
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleLarge)),
@@ -61,6 +69,7 @@ class CheckoutOfferDialog extends StatelessWidget {
                                 onPressed: () => Navigator.of(context).pop(),
                                 icon: const Icon(Icons.close)),
                           ]),
+                          const SizedBox(height: 8),
                           Flexible(
                               child: SingleChildScrollView(
                                   child: group == null ||
@@ -74,91 +83,89 @@ class CheckoutOfferDialog extends StatelessWidget {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.stretch,
                                           children: [
-                                              InputDecorator(
-                                                  decoration:
-                                                      const InputDecoration(
-                                                          labelText:
-                                                              'Gruppo nel bundle'),
-                                                  child:
-                                                      DropdownButtonHideUnderline(
-                                                          child: DropdownButton<
-                                                                  CheckoutGroupKey>(
-                                                              value: group.key,
-                                                              isExpanded: true,
-                                                              itemHeight: null,
-                                                              items: [
-                                                                for (final entry
-                                                                    in pile
-                                                                        .groups)
-                                                                  DropdownMenuItem(
-                                                                      value: entry
-                                                                          .key,
-                                                                      child: Padding(
-                                                                          padding: const EdgeInsets
-                                                                              .symmetric(
-                                                                              vertical:
-                                                                                  8),
-                                                                          child: Text(
-                                                                              '${entry.offers.first.card.name} · ${entry.key.condition} · ${entry.key.language}',
-                                                                              maxLines: 2,
-                                                                              overflow: TextOverflow.ellipsis)))
-                                                              ],
-                                                              onChanged: (key) {
-                                                                if (key !=
-                                                                    null) {
-                                                                  controller
-                                                                      .selectPileGroup(
-                                                                          pile!,
-                                                                          key);
-                                                                }
-                                                              }))),
-                                              CheckboxListTile(
-                                                  contentPadding: EdgeInsets
-                                                      .zero,
-                                                  tristate: true,
-                                                  value: controller
-                                                      .selectionFor(group),
-                                                  onChanged: controller
-                                                          .cart.canEdit
-                                                      ? (_) =>
-                                                          controller.selectGroup(
-                                                              group,
-                                                              controller.selectionFor(
-                                                                      group) !=
-                                                                  true)
-                                                      : null,
-                                                  title: const Text(
-                                                      'Seleziona questo gruppo'),
-                                                  subtitle: Text(
-                                                      '${group.quantity} copie · ${pknPrice(group.totalPkn)}'),
-                                                  activeColor:
-                                                      CheckoutStyle.stackAccent(
-                                                          colors, group.key)),
-                                              OfferSelector(
-                                                  index: index,
-                                                  count: group.offers.length,
-                                                  onPrevious: index > 0
-                                                      ? () => controller
-                                                          .selectOffer(
-                                                              group,
-                                                              group
-                                                                  .offers[
-                                                                      index - 1]
-                                                                  .listing
-                                                                  .id)
-                                                      : null,
-                                                  onNext: index <
-                                                          group.offers.length -
-                                                              1
-                                                      ? () => controller
-                                                          .selectOffer(
-                                                              group,
-                                                              group
-                                                                  .offers[
-                                                                      index + 1]
-                                                                  .listing
-                                                                  .id)
-                                                      : null),
+                                              CheckoutGroupButton(
+                                                  groups: pile.groups,
+                                                  selected: group,
+                                                  onSelected: (key) =>
+                                                      controller
+                                                          .selectPileGroup(
+                                                              pile!, key)),
+                                              const SizedBox(height: 8),
+                                              Wrap(
+                                                  alignment: WrapAlignment
+                                                      .spaceBetween,
+                                                  crossAxisAlignment:
+                                                      WrapCrossAlignment.center,
+                                                  spacing: 8,
+                                                  children: [
+                                                    Text(
+                                                        '${group.quantity} copie · ${pknPrice(group.totalPkn)}',
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .bodySmall),
+                                                    TextButton.icon(
+                                                        onPressed: controller
+                                                                .cart.canEdit
+                                                            ? () => controller
+                                                                .selectGroup(
+                                                                    group,
+                                                                    selected !=
+                                                                        true)
+                                                            : null,
+                                                        icon: Icon(
+                                                            selected == true
+                                                                ? Icons
+                                                                    .check_circle
+                                                                : selected ==
+                                                                        null
+                                                                    ? Icons
+                                                                        .indeterminate_check_box_outlined
+                                                                    : Icons
+                                                                        .circle_outlined,
+                                                            size: 18),
+                                                        label: Text(selected ==
+                                                                true
+                                                            ? 'Gruppo selezionato'
+                                                            : 'Seleziona gruppo')),
+                                                  ]),
+                                              if (group.offers.length > 1)
+                                                OfferSelector(
+                                                    index: index,
+                                                    count: group.offers.length,
+                                                    onPrevious: index > 0
+                                                        ? () => controller
+                                                            .selectOffer(
+                                                                group,
+                                                                group
+                                                                    .offers[
+                                                                        index -
+                                                                            1]
+                                                                    .listing
+                                                                    .id)
+                                                        : null,
+                                                    onNext: index <
+                                                            group.offers.length -
+                                                                1
+                                                        ? () => controller
+                                                            .selectOffer(
+                                                                group,
+                                                                group
+                                                                    .offers[
+                                                                        index +
+                                                                            1]
+                                                                    .listing
+                                                                    .id)
+                                                        : null),
+                                              if (group.offers.length == 1)
+                                                Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            bottom: 8),
+                                                    child: Text(
+                                                        'Offerta 1 di 1',
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .bodySmall)),
                                               CheckoutOfferDetails(
                                                   key: ValueKey(
                                                       offer.listing.id),
@@ -181,15 +188,23 @@ class CheckoutOfferDialog extends StatelessWidget {
                                                           offer.listing.id),
                                                   showRemoveOffer: false),
                                             ]))),
-                          const SizedBox(height: 8),
-                          if (controller.canUndo)
-                            TextButton.icon(
-                                onPressed: onUndo,
-                                icon: const Icon(Icons.undo),
-                                label: const Text('Annulla ultima rimozione')),
-                          FilledButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('Chiudi')),
+                          const SizedBox(height: 12),
+                          Wrap(
+                              alignment: WrapAlignment.end,
+                              spacing: 8,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                if (controller.canUndo)
+                                  TextButton.icon(
+                                      onPressed: onUndo,
+                                      icon: const Icon(Icons.undo, size: 20),
+                                      label: const Text(
+                                          'Annulla ultima rimozione')),
+                                FilledButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                    child: const Text('Chiudi')),
+                              ]),
                         ]))));
       });
 }
