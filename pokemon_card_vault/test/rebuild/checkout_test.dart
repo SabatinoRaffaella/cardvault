@@ -204,9 +204,10 @@ void main() {
   });
 
   testWidgets(
-      'holding then dragging chooses one axis; a short drag does nothing',
+      'swiping browses while holding keeps bundle/removal gestures separate',
       (tester) async {
     var removed = 0, next = 0, previous = 0;
+    var browsedNext = 0, browsedPrevious = 0;
     await tester.pumpWidget(MaterialApp(
         home: Scaffold(
             body: Center(
@@ -215,6 +216,8 @@ void main() {
                     onRemove: () => removed++,
                     onNext: () => next++,
                     onPrevious: () => previous++,
+                    onBrowseNext: () => browsedNext++,
+                    onBrowsePrevious: () => browsedPrevious++,
                     child: const SizedBox(
                         key: ValueKey('gesture-surface'),
                         width: 200,
@@ -239,6 +242,30 @@ void main() {
     expect(previous, 1);
     await drag(const Offset(0, -35));
     expect(removed, 1);
+    expect(browsedNext, 0);
+    expect(browsedPrevious, 0);
+
+    final surface = find
+        .ancestor(
+            of: find.byKey(const ValueKey('gesture-surface')),
+            matching: find.byType(GestureDetector))
+        .first;
+    await tester.drag(surface, const Offset(-110, 0));
+    await tester.pumpAndSettle();
+    expect(browsedNext, 1);
+    expect(browsedPrevious, 0);
+    await tester.drag(surface, const Offset(110, 0));
+    await tester.pumpAndSettle();
+    expect(browsedPrevious, 1);
+    await tester.drag(surface, const Offset(0, -110));
+    await tester.pumpAndSettle();
+    await tester.drag(surface, const Offset(-8, 0));
+    await tester.pumpAndSettle();
+    expect(browsedNext, 1);
+    expect(browsedPrevious, 1);
+    expect(removed, 1);
+    expect(next, 1);
+    expect(previous, 1);
     expect(tester.takeException(), isNull);
   });
 }

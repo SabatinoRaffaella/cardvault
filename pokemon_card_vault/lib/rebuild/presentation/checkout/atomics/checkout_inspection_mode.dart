@@ -37,8 +37,8 @@ class CheckoutInspectionMode extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
             inspecting
-                ? 'Lente attiva: tocca una carta per vedere le offerte.'
-                : 'Tocca una carta per cambiare gruppo.',
+                ? 'Scorri per sfogliare; tocca una carta per vedere le offerte.'
+                : 'Tocca o scorri le carte per cambiare gruppo.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall),
       ]);

@@ -28,6 +28,8 @@ class CheckoutPileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final active = controller.activeGroup(pile);
     final offer = controller.activeOffer(active);
+    final groupIndex =
+        pile.groups.indexWhere((group) => group.key == active.key);
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Text(pile.name, style: Theme.of(context).textTheme.headlineSmall),
       const SizedBox(height: 4),
@@ -53,6 +55,14 @@ class CheckoutPileCard extends StatelessWidget {
                   : null,
               onNext: onNext,
               onPrevious: onPrevious,
+              onBrowseNext: groupIndex < pile.groups.length - 1
+                  ? () => controller.selectPileGroup(
+                      pile, pile.groups[groupIndex + 1].key)
+                  : onNext,
+              onBrowsePrevious: groupIndex > 0
+                  ? () => controller.selectPileGroup(
+                      pile, pile.groups[groupIndex - 1].key)
+                  : onPrevious,
               selected: controller.selectionFor(active),
               selectionLabel:
                   'Seleziona gruppo · ${active.key.condition} · ${active.key.language}',

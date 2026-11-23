@@ -13,12 +13,15 @@ class CheckoutBundleGesture extends StatefulWidget {
       this.onRemove,
       this.onNext,
       this.onPrevious,
+      this.onBrowseNext,
+      this.onBrowsePrevious,
       this.selected,
       this.selectionLabel = 'Seleziona gruppo',
       this.onToggleSelection});
   final String targetId;
   final Widget child;
   final VoidCallback? onRemove, onNext, onPrevious;
+  final VoidCallback? onBrowseNext, onBrowsePrevious;
   final bool? selected;
   final String selectionLabel;
   final VoidCallback? onToggleSelection;
@@ -31,12 +34,19 @@ class _CheckoutBundleGestureState extends State<CheckoutBundleGesture> {
   _BundleDirection? _direction;
   bool _holding = false;
   bool _selectionVisible = false;
+  bool _browsing = false;
+  double _browseDistance = 0;
+  VoidCallback? _browseNextAtStart, _browsePreviousAtStart;
   VoidCallback? _removeAtStart;
   static const _threshold = 80.0;
 
   void _reset() {
     _holding = false;
     _selectionVisible = false;
+    _browsing = false;
+    _browseDistance = 0;
+    _browseNextAtStart = null;
+    _browsePreviousAtStart = null;
     _offset = Offset.zero;
     _direction = null;
     _removeAtStart = null;
@@ -75,6 +85,43 @@ class _CheckoutBundleGestureState extends State<CheckoutBundleGesture> {
     });
   }
 
+  // A quick horizontal drag wins before the hold timeout. Once the hold wins,
+  // Flutter cancels this recognizer, keeping copy removal/bundle drag separate.
+  void _browseStart(DragStartDetails _) {
+    if (_holding) return;
+    setState(() {
+      _browsing = true;
+      _browseDistance = 0;
+      _selectionVisible = false;
+      _browseNextAtStart = widget.onBrowseNext;
+      _browsePreviousAtStart = widget.onBrowsePrevious;
+    });
+  }
+
+  void _browseMove(DragUpdateDetails details) {
+    if (!_browsing) return;
+    _browseDistance += details.primaryDelta ?? 0;
+    final available = _browseDistance < 0
+        ? _browseNextAtStart != null
+        : _browsePreviousAtStart != null;
+    setState(() => _offset = Offset(
+        (_browseDistance * (available ? .65 : .15)).clamp(-120.0, 120.0), 0));
+  }
+
+  void _browseFinish(DragEndDetails details) {
+    if (!_browsing) return;
+    final velocity = details.primaryVelocity ?? 0;
+    final deliberate = _browseDistance.abs() >= 48 ||
+        (_browseDistance.abs() >= 18 &&
+            velocity.abs() >= 400 &&
+            velocity.sign == _browseDistance.sign);
+    final action = deliberate
+        ? (_browseDistance < 0 ? _browseNextAtStart : _browsePreviousAtStart)
+        : null;
+    setState(_reset);
+    action?.call();
+  }
+
   void _finish(LongPressEndDetails _) {
     if (!_holding) return;
     final action = _offset.distance >= _threshold
@@ -95,6 +142,8 @@ class _CheckoutBundleGestureState extends State<CheckoutBundleGesture> {
 
   @override
   Widget build(BuildContext context) {
+    final canBrowse =
+        widget.onBrowseNext != null || widget.onBrowsePrevious != null;
     final ready = _offset.distance >= _threshold;
     final label = !_holding
         ? 'Tieni premuto per selezionare o trascinare'
@@ -159,6 +208,14 @@ class _CheckoutBundleGestureState extends State<CheckoutBundleGesture> {
                                   : null)))),
           GestureDetector(
               behavior: HitTestBehavior.translucent,
+              onHorizontalDragStart: canBrowse ? _browseStart : null,
+              onHorizontalDragUpdate: canBrowse ? _browseMove : null,
+              onHorizontalDragEnd: canBrowse ? _browseFinish : null,
+              onHorizontalDragCancel: canBrowse
+                  ? () {
+                      if (_browsing) setState(_reset);
+                    }
+                  : null,
               onLongPressStart: (_) {
                 _removeAtStart = widget.onRemove;
                 setState(() {
@@ -173,7 +230,9 @@ class _CheckoutBundleGestureState extends State<CheckoutBundleGesture> {
                 if (_holding) setState(_reset);
               },
               child: AnimatedContainer(
-                  duration: _holding || MediaQuery.disableAnimationsOf(context)
+                  duration: _holding ||
+                          _browsing ||
+                          MediaQuery.disableAnimationsOf(context)
                       ? Duration.zero
                       : const Duration(milliseconds: 180),
                   transform:
