@@ -1,6 +1,29 @@
 # Pokoin Mobile Rebuild
 
-Client Flutter mobile del fork `SabatinoRaffaella/cardvault`, branch `AppMobile`. Versione: **1.2.1+64**; punto di ingresso `lib/rebuild/main_mobile_prototype.dart`.
+Client Flutter mobile del fork `SabatinoRaffaella/cardvault`, branch `AppMobile`. Versione: **1.3.0+65**; punto di ingresso `lib/rebuild/main_mobile_prototype.dart`.
+
+## Aggiornamento 1.3.0 — cache immagini
+
+Corretto l'accumulo di immagini residue su disco: la pulizia usa lo stesso
+filesystem dei download e rimuove il file prima del riferimento nell'indice.
+All'avvio vengono riconciliati i residui della sola cartella immagini.
+Budget: 64 MB di contenuto, massimo 240 immagini e 30 giorni di inutilizzo;
+i download in corso possono superare temporaneamente il budget prima della
+manutenzione aggregata. Dettagli in [Cache Rebuild](lib/rebuild/cache/README.md).
+
+Sul dispositivo controllato sono stati rimossi 2.254 file senza riferimento,
+liberando 167,5 MB allocati. Dopo l'avvio dell'aggiornamento: 240 file e 240
+record, nessun residuo, circa 22,5 MB allocati per le immagini. I dati
+persistenti confrontati sono rimasti identici dopo l'installazione con `-r`.
+Queste sono misure di un dispositivo; il difetto verificato riguarda lo spazio
+su disco, senza evidenza di un leak della RAM. Carte, account, carrello e
+scanner non vengono cancellati dalla pulizia.
+
+La versione include anche lo swipe orizzontale del Checkout già presente
+nell'APK locale. La release [v1.3.0](https://github.com/SabatinoRaffaella/cardvault/releases/tag/v1.3.0)
+riporta commit sorgente e SHA256 dell'APK profile ARM64. Analisi statica dei
+file cache e compilazione verificate; nessuna nuova suite di test eseguita
+per questo hotfix.
 
 ## Sviluppo
 

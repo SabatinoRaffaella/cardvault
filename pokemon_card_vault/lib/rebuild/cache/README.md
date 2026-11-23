@@ -8,11 +8,24 @@
   Il ripristino attende al massimo 280 ms: letture come quelle da 252–260 ms
   misurate sul telefono possono completarsi senza richieste ai metadati.
   Appena la lettura termina si prosegue, senza un'attesa fissa di 280 ms.
-- `marketplace_image_cache.dart`: unica istanza della cache immagini, massimo
-  240 file e rimozione dei file non utilizzati per 30 giorni. I widget lazy
+- `marketplace_image_cache.dart`: unica istanza della cache immagini, budget
+  di 64.000.000 byte (64 MB) di contenuto e massimo 240 immagini indicizzate;
+  rimozione delle immagini non utilizzate per 30 giorni. I widget lazy
   richiedono le immagini nel viewport, senza margine di precache
   dell'intero catalogo.
-  Il manager consente al massimo 2 download contemporanei.
+  Il manager consente al massimo 2 download contemporanei. La cache è condivisa
+  da ricerca/suggerimenti, caroselli, dettaglio, Cardex, scanner e carrello:
+  il limite dei 12 metadati dei caroselli non è il limite delle immagini.
+  `ImageCacheRepository` usa lo stesso `ImageCacheFileSystem` dei download per
+  eliminare i file prima dei record, evitando i residui dovuti ai percorsi
+  relativi della dipendenza. All'apertura riconcilia solo file UUID nella
+  directory immagini; durante l'uso applica il budget in ordine di ultimo
+  utilizzo, con controlli aggregati dopo 10 secondi. I download in corso possono
+  superare temporaneamente il budget; database e allocazione del filesystem
+  non sono inclusi nei 64 MB di contenuto. L'evizione invalida anche l'indice in
+  memoria, così una successiva visualizzazione può riscaricare l'immagine.
+  Se la rimozione fisica fallisce conserva il record per riprovare.
+  Non apre né modifica Hive, Firestore, quantità, offerte o file dello scanner.
 - `collection_artwork_cache.dart`: fino a 200 manifest pubblici delle scansioni
   delle carte effettivamente viste, conservati 7 giorni. Evita le GET per carta
   al riavvio quando il manifest salvato è valido; non memorizza errori o prezzi.
