@@ -64,6 +64,19 @@ persisted card or listing identities.
 Checkout displays one family bundle at a time, with previous/next buttons and
 a hold-and-drag gesture: left advances, right returns to the previous bundle.
 Each pile retains its own active group and offer selection.
+An ordinary horizontal swipe on the cards browses one group at release (left:
+next, right: previous). At a group's boundary it moves to the adjacent family
+bundle when available, including single-group bundles. It works in Sfoglia and
+Lente without opening the offer dialog or changing purchase quantities. The
+gesture requires deliberate horizontal travel or a fast flick; canceled/tiny
+drags do nothing. Normal vertical page scrolling stays available. The existing
+hold recognizer wins after its timeout, keeping hold-to-select, upward copy
+removal and direct sideways bundle navigation separate from the quick swipe.
+The swipe follow-up passes the six targeted tests in `checkout_test.dart`,
+including ordinary left/right swipes, long-press direction separation, vertical
+and tiny drags, offer browsing/removal/Undo and narrow-screen dialogs. No unrelated
+or visual test suite was run; source analysis and the standard APK build are used
+alongside these functional Checkout checks.
 The active group is upright, centered and in front. Up to two neighboring group
 faces per side appear smaller and turned slightly in perspective; only these
 visible groups build cached artwork. Up to four paper layers indicate copies,
