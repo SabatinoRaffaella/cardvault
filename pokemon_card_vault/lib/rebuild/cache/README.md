@@ -30,6 +30,8 @@
   delle carte effettivamente viste, conservati 7 giorni. Evita le GET per carta
   al riavvio quando il manifest salvato è valido; non memorizza errori o prezzi.
   La lettura locale ha un budget di 280 ms, senza bloccare i dati del proprietario.
+  Se la rete non risponde, un manifest già salvato rimane utilizzabile anche
+  dopo sette giorni; viene aggiornato al prossimo recupero riuscito.
 - `collection_preview_cache.dart`: le prime 24 anteprime di ciascuna schermata
   Portfolio/Cardex, nello stesso ordine dell'ultimo caricamento completo, per
   7 giorni. I due elenchi sono separati; scroll e ricostruzioni dei widget non
@@ -38,8 +40,11 @@
   account e ripristina solo dopo averne ricevuto lo stesso UID dalla sessione.
   Non salva quantità, prezzi, attributi di vendita, ID delle copie o credenziali.
   Le anteprime sono marcate `fromCache`, restano in caricamento e non costituiscono
-  prova di possesso o un target per lo switch. Le richieste autorevoli partono in
-  parallelo; il loro risultato completo sostituisce la cache anche quando è vuoto.
+  prova di possesso o un target per lo switch. Se la sincronizzazione fallisce,
+  restano consultabili anche oltre sette giorni con avviso e pulsante Riprova;
+  il limite di 24 anteprime e la disponibilità delle immagini già scaricate
+  continuano ad applicarsi. Le richieste autorevoli partono in parallelo; il
+  loro risultato completo sostituisce la cache anche quando è vuoto.
   Cardex mantiene l'anteprima durante la riconciliazione Held; Portfolio può già
   usare i listing completi. Vengono salvati soltanto i metadati del prefisso già
   ricevuto: le immagini mantengono il caricamento lazy delle sole carte visibili.

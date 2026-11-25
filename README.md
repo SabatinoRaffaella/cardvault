@@ -2,7 +2,11 @@
 
 Fork mobile mantenuto in [SabatinoRaffaella/cardvault](https://github.com/SabatinoRaffaella/cardvault), branch predefinito `AppMobile`.
 
-Il progetto Flutter vive in `pokemon_card_vault/`; il punto di ingresso attivo e `lib/rebuild/main_mobile_prototype.dart`. Versione corrente: **1.2.1+64**.
+Il progetto Flutter vive in `pokemon_card_vault/`; il punto di ingresso attivo e `lib/rebuild/main_mobile_prototype.dart`. Versione corrente: **1.3.1+66**.
+
+L'aggiornamento 1.3.1 aggiunge la consultazione delle anteprime salvate di
+Portfolio/Cardex offline e un suono Android quando lo scanner acquisisce una
+carta riconosciuta. Pubblicato su `AppMobile`, senza tag o release.
 
 ## Avvio Android
 

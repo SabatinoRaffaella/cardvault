@@ -260,6 +260,7 @@ class _CardAlbumState extends State<CardAlbum> {
                         key: ValueKey(card.id),
                         card: card,
                         artworkOnly: true,
+                        previewWhileLoading: widget.collection.fromCache,
                         collectionAction: widget.actionBuilder?.call(card),
                         quantity: widget.collection.quantityFor(card.id),
                         viewportPosition: _viewportPosition,

@@ -36,7 +36,6 @@ class CollectionArtworkCache {
             if (!RegExp(r'^[1-9]\d*$').hasMatch(id) ||
                 saved == null ||
                 saved.isAfter(now) ||
-                now.difference(saved) > retention ||
                 manifest is! String ||
                 manifest.length > 2000) {
               continue;
@@ -48,12 +47,14 @@ class CollectionArtworkCache {
         }
       }();
 
-  Future<MarketplaceCard?> read(String id) async {
+  Future<MarketplaceCard?> read(String id, {bool allowExpired = false}) async {
     await _load();
     final row = _entries.remove(id);
     if (row == null) return null;
     final saved = DateTime.tryParse('${row['savedAt']}');
-    if (saved == null || DateTime.now().difference(saved) > retention) {
+    if (saved == null ||
+        (!allowExpired && DateTime.now().difference(saved) > retention)) {
+      _entries[id] = row;
       return null;
     }
     _entries[id] = row;

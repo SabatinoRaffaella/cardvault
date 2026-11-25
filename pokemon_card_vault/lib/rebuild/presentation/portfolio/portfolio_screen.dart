@@ -77,6 +77,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                                           'Le tue carte in vendita su Pokoin.'),
                                       CollectionNotice(
                                           status: collection.status,
+                                          fromCache: collection.fromCache,
                                           onRetry: controller.retryCollection),
                                       if (collection.status ==
                                               CollectionStatus.loading &&
@@ -112,7 +113,10 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                                         controller.portfolioOwnershipFor,
                                     priceLabelFor: (card) {
                                       if (collection.fromCache) {
-                                        return 'Aggiornamento prezzo…';
+                                        return collection.status ==
+                                                CollectionStatus.unavailable
+                                            ? 'Prezzo non aggiornato'
+                                            : 'Aggiornamento prezzo…';
                                       }
                                       final price =
                                           controller.portfolioPriceFor(card.id);

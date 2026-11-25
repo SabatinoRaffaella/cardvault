@@ -1,10 +1,23 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import '../model/scanner.dart';
 import '../service/scanner_service.dart';
 
 class ScannerController extends ChangeNotifier {
+  static const _soundChannel = MethodChannel('pokoin.scan/sound');
+
+  Future<void> _playCaptureSound() async {
+    try {
+      await _soundChannel.invokeMethod<void>('capture');
+    } on PlatformException catch (_) {
+      // Sound is optional and must never interrupt recognition.
+    } on MissingPluginException catch (_) {
+      // The sound is currently available on Android.
+    }
+  }
+
   ScannerController(
       {ScannerService? service,
       Future<void> Function(List<ScannedCard>)? storeDrafts})
@@ -260,6 +273,7 @@ class ScannerController extends ChangeNotifier {
       ];
       _latchedId = best.cardId;
       _lastCaptureId = id;
+      unawaited(_playCaptureSound());
       message = '${best.name} acquisita · da confermare.';
       if (mode == ScanMode.single) {
         singleCaptureId = id;

@@ -34,7 +34,7 @@ and language; chart notifications rebuild only the open drawer.
 Visible-card reopening cache: existing decoded images and metadata remain in
 memory during the app session. A v2 disk preview now retains the first 24 cards
 of each screen's last complete live snapshot, in exactly that snapshot's order,
-for the last account, expiring after seven days and restored
+for the last account, normally refreshed after seven days and restored
 only after the matching authenticated UID arrives. Images already downloaded
 reuse the shared disk image cache (now capped at 240 files); up to 200 public
 language manifests are also retained for seven days, avoiding repeated per-card
@@ -52,6 +52,17 @@ Portfolio can already use complete live listing data independently. Portfolio
 tiles are keyed/remapped by canonical card ID to keep image state attached to
 the same print across updates. Actual server membership/order changes still
 produce legitimate updates. Confirmed switches/scanner saves invalidate previews.
+If owner synchronization fails, the same account's cached prefixes remain
+visible and are labelled as potentially out of date, even when older than seven
+days; retry is offered and sale/ownership controls remain unconfirmed. A failed
+Held read does not prevent Portfolio from using a successful fresh listings read.
+Saved language manifests can likewise be used after a failed refresh. Only the
+24 cached previews per screen and image files still present on disk are available;
+the cache does not represent the full collection or guarantee offline card details.
+The offline fallback profile ARM64 APK was rebuilt and verified, SHA256
+`9B9BBDD809D068E0E74AAA9B36EEDA878D3A5F987F97E76A81F1DFE51AA8171D`.
+Source analysis found no errors and one style suggestion; no device/offline
+functional check was performed and no test suites were run.
 Storage errors do not fail the view. No tests/harnesses were created, copied or
 run for this cache change; validation is source analysis and the phone APK build,
 with actual startup/tab timing still requiring a connected device.

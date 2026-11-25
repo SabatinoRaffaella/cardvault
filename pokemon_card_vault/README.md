@@ -1,6 +1,18 @@
 # Pokoin Mobile Rebuild
 
-Client Flutter mobile del fork `SabatinoRaffaella/cardvault`, branch `AppMobile`. Versione: **1.3.0+65**; punto di ingresso `lib/rebuild/main_mobile_prototype.dart`.
+Client Flutter mobile del fork `SabatinoRaffaella/cardvault`, branch `AppMobile`. Versione: **1.3.1+66**; punto di ingresso `lib/rebuild/main_mobile_prototype.dart`.
+
+## Aggiornamento 1.3.1 — Portfolio/Cardex offline e suono scanner
+
+Portfolio e Cardex mantengono visibili le anteprime salvate se la sincronizzazione
+fallisce, anche oltre sette giorni, con avviso e possibilita di riprovare. Sono
+disponibili fino a 24 anteprime per schermata e le immagini gia scaricate;
+prezzi, quantita e operazioni di vendita richiedono dati aggiornati.
+Su Android lo scanner riproduce un breve suono quando acquisisce una carta
+riconosciuta. Aggiornamento pubblicato su `AppMobile`, senza tag o release.
+
+Compilazione profile ARM64 e inclusione del file audio verificate; la prova
+offline e la riproduzione del suono sul telefono restano da fare.
 
 ## Aggiornamento 1.3.0 — cache immagini
 

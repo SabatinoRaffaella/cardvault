@@ -4,6 +4,10 @@ Lo scanner offre Single e Batch. Ready avvia la fotocamera; entrare nella scheda
 non la accende automaticamente. Il motore nativo, la stabilizzazione su due
 osservazioni e i primi tre candidati restano condivisi tra le due modalità.
 
+Su Android, quando una carta riconosciuta viene acquisita, viene riprodotto
+`scanner_capture.wav` tramite SoundPool sul volume multimediale. Il segnale
+acustico e opzionale e gli errori audio non interrompono il riconoscimento.
+
 ## Single
 
 Una carta riconosciuta mette in pausa la scansione, salva una bozza locale in

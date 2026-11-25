@@ -3,9 +3,13 @@ import '../../../model/cardex.dart';
 
 class CollectionNotice extends StatelessWidget {
   const CollectionNotice(
-      {super.key, required this.status, required this.onRetry});
+      {super.key,
+      required this.status,
+      required this.onRetry,
+      this.fromCache = false});
   final CollectionStatus status;
   final VoidCallback onRetry;
+  final bool fromCache;
 
   @override
   Widget build(BuildContext context) {
@@ -14,8 +18,9 @@ class CollectionNotice extends StatelessWidget {
       CollectionStatus.loading => 'Caricamento della tua collezione…',
       CollectionStatus.guest =>
         'Accedi al tuo account Pokoin per vedere le carte possedute e quelle mancanti. Il catalogo è consultabile anche senza accesso.',
-      CollectionStatus.unavailable =>
-        'La collezione non è disponibile. Lo stato delle carte resta da verificare.',
+      CollectionStatus.unavailable => fromCache
+          ? 'Impossibile aggiornare. Mostriamo le carte salvate: potrebbero non essere aggiornate.'
+          : 'La collezione non è disponibile. Lo stato delle carte resta da verificare.',
       CollectionStatus.ready => '',
     };
     return Padding(

@@ -38,7 +38,8 @@ class CollectionPreviewCache {
         }
       }();
 
-  List<MarketplaceCardPreview> _cards(String section) {
+  List<MarketplaceCardPreview> _cards(String section,
+      {bool allowExpired = false}) {
     final snapshot = _record[section];
     if (snapshot is! Map) return const [];
     final rows = snapshot['cards'];
@@ -47,7 +48,7 @@ class CollectionPreviewCache {
     if (rows is! List ||
         saved == null ||
         saved.isAfter(now) ||
-        now.difference(saved) > retention) {
+        (!allowExpired && now.difference(saved) > retention)) {
       return const [];
     }
     final result = <MarketplaceCardPreview>[];
@@ -70,12 +71,12 @@ class CollectionPreviewCache {
     return result;
   }
 
-  Future<CardCollection?> read(String uid) async {
+  Future<CardCollection?> read(String uid, {bool allowExpired = false}) async {
     await _operations;
     await _load();
     if (_activeUid != uid || _record['uid'] != uid) return null;
-    final items = _cards('cardex');
-    final listed = _cards('portfolio');
+    final items = _cards('cardex', allowExpired: allowExpired);
+    final listed = _cards('portfolio', allowExpired: allowExpired);
     if (items.isEmpty && listed.isEmpty) return null;
     return CardCollection(
         status: CollectionStatus.loading,

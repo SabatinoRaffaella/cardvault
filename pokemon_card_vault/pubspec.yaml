@@ -2,7 +2,7 @@ name: pokoin
 description: "Pokoin marketplace, wallet, and card reserve app"
 publish_to: 'none'
 
-version: 1.3.0+65
+version: 1.3.1+66
 
 environment:
   sdk: '>=3.6.0 <4.0.0'

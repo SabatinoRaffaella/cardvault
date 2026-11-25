@@ -24,9 +24,15 @@ class CollectionArtworkService {
         .read(id)
         .timeout(const Duration(milliseconds: 280), onTimeout: () => null);
     if (cached != null) return cached;
-    final card = await _cards.fetchCard(id);
-    unawaited(_cache.remember(card));
-    return card;
+    try {
+      final card = await _cards.fetchCard(id);
+      unawaited(_cache.remember(card));
+      return card;
+    } catch (_) {
+      final stale = await _cache.read(id, allowExpired: true);
+      if (stale != null) return stale;
+      rethrow;
+    }
   }
 
   Future<String> readLanguage() async {

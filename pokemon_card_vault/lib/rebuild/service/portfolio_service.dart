@@ -13,7 +13,8 @@ class PortfolioService {
           status: collection.listingsStatus,
           ownerId: collection.ownerId,
           fromCache: collection.fromCache &&
-              collection.listingsStatus == CollectionStatus.loading,
+              collection.listingsStatus != CollectionStatus.ready &&
+              collection.cachedListedCards.isNotEmpty,
           cachedCards: collection.cachedListedCards,
           items: collection.listedItems);
 

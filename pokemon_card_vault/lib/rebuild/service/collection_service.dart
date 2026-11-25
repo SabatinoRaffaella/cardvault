@@ -79,11 +79,17 @@ class CollectionService {
                   .cards);
         }
         if (holdingsFailed || listingsFailed) {
-          // Cardex needs both sources; Portfolio needs only validated listings.
+          // Cached artwork is a read-only fallback; fresh complete listings can
+          // still power Portfolio independently of a failed Held request.
           emit(CardCollection(
               ownerId: uid,
               status: CollectionStatus.unavailable,
               listingsStatus: listingsStatus,
+              fromCache: savedPreview?.cachedCards.isNotEmpty == true ||
+                  (listingsFailed &&
+                      savedPreview?.cachedListedCards.isNotEmpty == true),
+              cachedCards: savedPreview?.cachedCards ?? const [],
+              cachedListedCards: savedPreview?.cachedListedCards ?? const [],
               listedItems: listedItems));
         } else if (inventoryComplete && holdings != null) {
           final owned = const InventoryReconciliationService()
@@ -121,7 +127,7 @@ class CollectionService {
       final skipPreview = _skipPreviewOnce;
       _skipPreviewOnce = false;
       if (_inventory != null && !skipPreview) {
-        unawaited(_previews.read(uid).then((preview) {
+        unawaited(_previews.read(uid, allowExpired: true).then((preview) {
           if (!cancelled &&
               request == version &&
               listings == null &&
@@ -134,6 +140,20 @@ class CollectionService {
         }).catchError((Object _) {}));
       }
 
+      void restoreAfterFailure() {
+        if (skipPreview || _inventory == null) return;
+        unawaited(_previews.read(uid, allowExpired: true).then((preview) {
+          if (cancelled ||
+              request != version ||
+              preview == null ||
+              (!holdingsFailed && !listingsFailed)) {
+            return;
+          }
+          savedPreview = preview;
+          publish();
+        }).catchError((Object _) {}));
+      }
+
       if (_inventory != null) {
         inventory = _inventory.watchItems(uid).listen((page) {
           listings = page.items;
@@ -142,6 +162,7 @@ class CollectionService {
         }, onError: (Object error, StackTrace stack) {
           listingsFailed = true;
           publish();
+          restoreAfterFailure();
         });
       }
       items = _provider.watchItems(uid).listen((rows) {
@@ -150,6 +171,7 @@ class CollectionService {
       }, onError: (Object error, StackTrace stack) {
         holdingsFailed = true;
         publish();
+        restoreAfterFailure();
       });
     }
 
